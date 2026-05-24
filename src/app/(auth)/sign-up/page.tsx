@@ -26,6 +26,7 @@ function SignUpPage() {
   })
 
   async function onSubmit(values: SignUpFormValues) {
+    setServerError(null)
     setIsLoading(true)
     const formData = new FormData()
     formData.append('email', values.email)
