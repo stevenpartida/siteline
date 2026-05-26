@@ -2,7 +2,9 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { signInSchema, signUpSchema } from "@/lib/validators/auth";
+import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 export type AuthActionResult = {
     error: string | null
@@ -72,4 +74,14 @@ export async function signInAction(formData: FormData): Promise<AuthActionResult
         return {error: 'Sign in failed. Please try again.'}
     }
     return {error: null}
+}
+
+export async function SignOutAction() {
+    const cookieStore = await cookies()
+    const supabase = createClient(cookieStore)
+
+    await supabase.auth.signOut()
+    revalidatePath('/')
+    redirect('/')
+
 }
