@@ -1,66 +1,67 @@
-"use client";
-
-import { type SignUpFormValues, signUpSchema } from "@/lib/validators/auth";
-import { Controller, useForm } from "react-hook-form";
+import {
+  type CreateCompanyFormValues,
+  createCompanySchema,
+} from "@/lib/validators/company";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import React, { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { Button } from "../ui/button";
+import { Field, FieldError, FieldLabel } from "../ui/field";
+import { Input } from "../ui/input";
+import { createCompanyAction } from "@/actions/company";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
-import { signUpAction } from "@/actions/auth";
-
-function SignUpPage() {
+function CreateCompanyForm() {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm<SignUpFormValues>({
-    resolver: zodResolver(signUpSchema),
-    defaultValues: { email: "", password: "" },
+  const form = useForm<CreateCompanyFormValues>({
+    resolver: zodResolver(createCompanySchema),
+    defaultValues: { full_name: "", company_name: "" },
   });
 
-  async function onSubmit(values: SignUpFormValues) {
+  async function onSubmit(values: CreateCompanyFormValues) {
     setServerError(null);
     setIsLoading(true);
     const formData = new FormData();
-    formData.append("email", values.email);
-    formData.append("password", values.password);
+    formData.append("full_name", values.full_name);
+    formData.append("company_name", values.company_name);
 
-    const result = await signUpAction(formData);
+    const result = await createCompanyAction(formData);
     if (result.error) {
       setServerError(result.error);
       setIsLoading(false);
       return;
     }
-
-    router.push("/onboarding");
+    console.log(values);
+    router.push("/dashboard");
   }
-
   return (
     <div className="flex-1 flex flex-col justify-center px-6 pt-safe pb-safe bg-background md:max-w-sm mx-auto w-full">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight">Create an account</h1>
+        <h1 className="text-2xl font-bold tracking-tight">
+          Set up your company
+        </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Sign up to get started with Siteline.
+          Enter your details to get started.
         </p>
       </div>
 
       {/* Form */}
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <Controller
-          name="email"
+          name="full_name"
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid || undefined}>
-              <FieldLabel>Email</FieldLabel>
+              <FieldLabel>Your Name</FieldLabel>
               <Input
                 {...field}
-                placeholder="you@example.com"
-                autoComplete="email"
-                inputMode="email"
+                placeholder="John Smith"
+                autoComplete="off"
+                inputMode="text"
               />
               <FieldError>{fieldState.error?.message}</FieldError>
             </Field>
@@ -68,16 +69,16 @@ function SignUpPage() {
         />
 
         <Controller
-          name="password"
+          name="company_name"
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid || undefined}>
-              <FieldLabel>Password</FieldLabel>
+              <FieldLabel>Company Name</FieldLabel>
               <Input
                 {...field}
-                type="password"
-                placeholder="At least 8 characters"
-                autoComplete="new-password"
+                placeholder="Ace Roofing"
+                autoComplete="off"
+                inputMode="text"
               />
               <FieldError>{fieldState.error?.message}</FieldError>
             </Field>
@@ -90,19 +91,11 @@ function SignUpPage() {
         )}
 
         <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
-          {isLoading ? "Creating account..." : "Continue"}
+          {isLoading ? "Creating company..." : "Create"}
         </Button>
       </form>
-
-      {/* Sign in link */}
-      <p className="text-sm text-center text-muted-foreground mt-6">
-        Already have an account?{" "}
-        <a href="/sign-in" className="text-primary font-medium">
-          Sign in
-        </a>
-      </p>
     </div>
   );
 }
 
-export default SignUpPage;
+export default CreateCompanyForm;

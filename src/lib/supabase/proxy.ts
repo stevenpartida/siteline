@@ -48,19 +48,18 @@ export async function updateSession(request: NextRequest) {
   }
 
   // 4. Has user + no company → redirect to onboarding
-  const { data: membership } = await supabase
-    .from("company_members")
+  const { data: userData } = await supabase
+    .from("users")
     .select("company_id")
-    .eq("user_id", user.sub)
-    .limit(1)
+    .eq("id", user.sub)
     .single();
 
-  if (!membership && path !== "/onboarding") {
+  if (!userData?.company_id && path !== "/onboarding") {
     return NextResponse.redirect(new URL("/onboarding", request.url));
   }
 
   // 5. Has user + has company + trying to hit onboarding → redirect to dashboard
-  if (membership && path === "/onboarding") {
+  if (userData?.company_id && path === "/onboarding") {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
