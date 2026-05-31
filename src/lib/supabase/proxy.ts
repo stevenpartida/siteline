@@ -32,7 +32,7 @@ export async function updateSession(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   const publicRoutes = ["/", "/sign-in", "/sign-up"];
-  const isPublic = publicRoutes.includes(path) || path.startsWith("/invite");
+  const isPublic = publicRoutes.includes(path) || path.startsWith("/join");
 
   // 1. Public route → let through
   if (isPublic) return supabaseResponse;

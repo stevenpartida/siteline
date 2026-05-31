@@ -20,7 +20,6 @@ export async function createCompanyAction(
 
   // Parse raw data
   const rawData = {
-    full_name: formData.get("full_name"),
     company_name: formData.get("company_name"),
   };
 
@@ -29,7 +28,7 @@ export async function createCompanyAction(
     return { error: parseData.error.issues[0].message };
   }
 
-  const { full_name, company_name } = parseData.data;
+  const { company_name } = parseData.data;
 
   // Insert new company into database
   const { data: company, error: companyError } = await supabase
@@ -45,11 +44,105 @@ export async function createCompanyAction(
   // Update User Table
   const { error: userError } = await supabase
     .from("users")
-    .update({ full_name: full_name, company_id: company.id, role: "owner" })
+    .update({ company_id: company.id, role: "owner" })
     .eq("id", user.id);
 
   if (userError) {
     return { error: "Failed to update users table" };
+  }
+
+  return { error: null };
+}
+
+export async function createInviteAction(): Promise<{
+  token: string | null;
+  error: string | null;
+}> {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+
+  // Get authenticated user
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { token: null, error: "Not authenticated " };
+  }
+
+  // Get user's company_id and confirm owner role
+  const { data: userData, error: userError } = await supabase
+    .from("users")
+    .select("company_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (!userData) {
+    return { token: null, error: "Failed to fetch user" };
+  }
+  if (userError || !userData.company_id) {
+    return { token: null, error: "No company found" };
+  }
+
+  if (userData.role !== "owner") {
+    return { token: null, error: "Only owners can invite crew" };
+  }
+
+  //Generate token and expiroy
+  const token = crypto.randomUUID();
+  const expires_at = new Date();
+  expires_at.setDate(expires_at.getDate() + 7);
+
+  // Insert invite row
+  const { error: inviteError } = await supabase.from("invites").insert({
+    company_id: userData.company_id,
+    token,
+    status: "pending",
+    expires_at: expires_at.toISOString(),
+  });
+  if (inviteError) {
+    return { token: null, error: "Failed to create invite" };
+  }
+
+  return { token, error: null };
+}
+
+export async function revokeInviteAction(
+  token: string,
+): Promise<{ error: string | null }> {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+
+  // Get Authenticated user
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Not authenticated" };
+  }
+
+  // Confirm user owner role
+  const { data: userData } = await supabase
+    .from("users")
+    .select("company_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (!userData) {
+    return { error: "Failed to fetch user" };
+  }
+
+  if (userData.role !== "owner") {
+    return { error: "Only owners can revoke invites" };
+  }
+
+  const { error } = await supabase
+    .from("invites")
+    .update({ status: "revoked" })
+    .eq("token", token)
+    .eq("company_id", userData.company_id);
+
+  if (error) {
+    return { error: "Failed to revoke invite" };
   }
 
   return { error: null };

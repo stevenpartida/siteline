@@ -2,6 +2,7 @@
 
 import SignOutButton from "@/components/auth/sign-out-button";
 import CreateCompanyForm from "@/components/onboarding/create-company-form";
+import JoinCompanyForm from "@/components/onboarding/join-company-form";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
@@ -28,6 +29,7 @@ function OnboardingPage() {
     join: (
       <div>
         <Button onClick={() => setView("choice")}>Back</Button>
+        <JoinCompanyForm />
       </div>
     ),
   };

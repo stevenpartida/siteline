@@ -1,4 +1,5 @@
 import SignOutButton from "@/components/auth/sign-out-button";
+import InviteButton from "@/components/company/invite-button";
 import React from "react";
 
 function page() {
@@ -6,6 +7,7 @@ function page() {
     <div>
       dashboard
       <SignOutButton />
+      <InviteButton />
     </div>
   );
 }
