@@ -1,9 +1,15 @@
-import React from 'react'
+import Link from "next/link";
+import React from "react";
 
-function page() {
+function LandingPage() {
   return (
-    <div>Landing Page</div>
-  )
+    <div>
+      Landing Page Marketing
+      <div>
+        <Link href="/sign-in">Sign </Link>
+      </div>
+    </div>
+  );
 }
 
-export default page
+export default LandingPage;
