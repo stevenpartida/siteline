@@ -5,6 +5,14 @@ const nextConfig: NextConfig = {
     "192.168.1.164",
     "surfboard-yearly-overlook.ngrok-free.dev",
   ],
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "nljpnnjzmexnculksjnw.supabase.co",
+      },
+    ],
+  },
   async headers() {
     return [
       {
