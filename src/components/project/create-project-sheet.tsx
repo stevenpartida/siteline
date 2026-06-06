@@ -12,14 +12,21 @@ function CreateProjectSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="rounded-3xl"
+        className="rounded-t-3xl bg-background"
         showCloseButton={false}
         aria-describedby={undefined}
         autoFocus={false}
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
-        <SheetHeader>
-          <SheetTitle>Enter Project Details</SheetTitle>
+        <SheetHeader className="flex-1  align-middle items-center">
+          <button
+            onClick={() => onOpenChange(false)}
+            className="mx-auto w-12 h-1.5 rounded-full bg-muted-foreground/40 mb-4 block"
+            aria-label="Close sheet"
+          />
+          <SheetTitle className="text-sm font-medium text-foreground -mb-3">
+            Enter Project Details
+          </SheetTitle>
         </SheetHeader>
         <CreateProjectForm
           onComplete={(result) => {

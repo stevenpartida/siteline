@@ -10,6 +10,7 @@ import { Button } from "../ui/button";
 import { Field, FieldError, FieldLabel } from "../ui/field";
 import { Input } from "../ui/input";
 import { createProjectAction } from "@/actions/project";
+import { Spinner } from "../ui/spinner";
 
 type CreateProjectFormProps = {
   onComplete: (result: {
@@ -53,13 +54,16 @@ function CreateProjectForm({ onComplete }: CreateProjectFormProps) {
     router.push(`/projects/${result.projectId}`);
   }
   return (
-    <div>
+    <div className="flex-1 flex-col pb-12 px-4  w-full">
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <Controller
           name="project_name"
           control={form.control}
           render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid || undefined}>
+            <Field
+              data-invalid={fieldState.invalid || undefined}
+              className="mb-4"
+            >
               <Input
                 {...field}
                 placeholder="Project Name"
@@ -70,13 +74,15 @@ function CreateProjectForm({ onComplete }: CreateProjectFormProps) {
             </Field>
           )}
         />
-        <div>
+        <div className="flex flex-col gap-1 mb-4">
+          <FieldLabel className="pl-1 text-foreground text-sm">
+            Address
+          </FieldLabel>
           <Controller
             name="address_line_1"
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid || undefined}>
-                <FieldLabel>Address Line 1</FieldLabel>
                 <Input
                   {...field}
                   placeholder="Address Line 1"
@@ -92,7 +98,6 @@ function CreateProjectForm({ onComplete }: CreateProjectFormProps) {
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid || undefined}>
-                <FieldLabel>Address Line 2</FieldLabel>
                 <Input
                   {...field}
                   placeholder="Address Line 2"
@@ -104,15 +109,18 @@ function CreateProjectForm({ onComplete }: CreateProjectFormProps) {
             )}
           />
         </div>
-        <div>
+        <div className="flex flex-row gap-1">
           <Controller
             name="city"
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid || undefined}>
-                <FieldLabel>City</FieldLabel>
+                <FieldLabel className="pl-1 text-foreground text-sm">
+                  City
+                </FieldLabel>
                 <Input
                   {...field}
+                  className="-mt-1"
                   placeholder="City"
                   autoComplete="off"
                   inputMode="text"
@@ -126,9 +134,12 @@ function CreateProjectForm({ onComplete }: CreateProjectFormProps) {
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid || undefined}>
-                <FieldLabel>State</FieldLabel>
+                <FieldLabel className="pl-1 text-foreground text-sm">
+                  State
+                </FieldLabel>
                 <Input
                   {...field}
+                  className="-mt-1"
                   placeholder="State"
                   autoComplete="off"
                   inputMode="text"
@@ -142,9 +153,12 @@ function CreateProjectForm({ onComplete }: CreateProjectFormProps) {
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid || undefined}>
-                <FieldLabel>Zip Code</FieldLabel>
+                <FieldLabel className="pl-1 text-foreground text-sm">
+                  Zip Code
+                </FieldLabel>
                 <Input
                   {...field}
+                  className="-mt-1"
                   placeholder="Zip Code"
                   autoComplete="off"
                   inputMode="text"
@@ -157,8 +171,19 @@ function CreateProjectForm({ onComplete }: CreateProjectFormProps) {
 
         {serverError && <p>{serverError}</p>}
 
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? "Creating company..." : "Create"}
+        <Button
+          type="submit"
+          disabled={isLoading}
+          className="mt-12 w-full h-12 rounded-xl"
+        >
+          {isLoading ? (
+            <>
+              <Spinner />
+              <span>Creating...</span>
+            </>
+          ) : (
+            "Create Project"
+          )}
         </Button>
       </form>
     </div>
