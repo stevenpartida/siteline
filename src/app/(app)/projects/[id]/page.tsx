@@ -46,6 +46,7 @@ async function ProjectPage({ params }: ProjectProps) {
           </span>
         </div>
         <ProjectTabs
+          projectId={id}
           photos={sortProjectsByRecent}
           documents={project.documents}
         />

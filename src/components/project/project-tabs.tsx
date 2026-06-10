@@ -16,11 +16,12 @@ import { Button } from "../ui/button";
 import AddMediaDrawer from "./add-media-drawer";
 
 type ProjectTabsProps = {
+  projectId: string;
   photos: Photo[] | null;
   documents: Document[] | null;
 };
 
-function ProjectTabs({ photos, documents }: ProjectTabsProps) {
+function ProjectTabs({ photos, documents, projectId }: ProjectTabsProps) {
   const [activeTab, setActiveTab] = useState<"photos" | "documents">("photos");
   const [addDrawerOpen, setAddDrawerOpen] = useState(false);
 
@@ -123,6 +124,7 @@ function ProjectTabs({ photos, documents }: ProjectTabsProps) {
         )}
       </div>
       <AddMediaDrawer
+        projectId={projectId}
         activeTab={activeTab}
         open={addDrawerOpen}
         onOpenChange={setAddDrawerOpen}

@@ -14,7 +14,12 @@ function CreateProjectSheet({
   onOpenChange: (open: boolean) => void;
 }) {
   return (
-    <Drawer open={open} onOpenChange={onOpenChange} direction="bottom">
+    <Drawer
+      open={open}
+      onOpenChange={onOpenChange}
+      direction="bottom"
+      repositionInputs={false}
+    >
       <DrawerContent
         className="rounded-t-3xl bg-background "
         aria-describedby={undefined}
