@@ -5,6 +5,11 @@ const nextConfig: NextConfig = {
     "192.168.1.164",
     "surfboard-yearly-overlook.ngrok-free.dev",
   ],
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "12mb",
+    },
+  },
   images: {
     remotePatterns: [
       {

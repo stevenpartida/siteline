@@ -30,9 +30,7 @@ function AddMediaDrawer({
   onOpenChange,
 }: AddMediaDrawerProps) {
   const photoInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
   const documentInputRef = useRef<HTMLInputElement>(null);
-  const scanInputRef = useRef<HTMLInputElement>(null);
 
   const router = useRouter();
 
@@ -90,10 +88,7 @@ function AddMediaDrawer({
                 onChange={handleFileChange("photos")}
               />
 
-              <button
-                onClick={() => cameraInputRef.current?.click()}
-                className="flex flex-row border bg-white items-center gap-4 w-full rounded-2xl"
-              >
+              <label className="flex flex-row border bg-white items-center gap-4 w-full rounded-2xl cursor-pointer">
                 <div className="p-4 flex items-center justify-center">
                   <IconCamera
                     size={24}
@@ -104,15 +99,14 @@ function AddMediaDrawer({
                 <span className="text-base font-semibold text-foreground">
                   Take Photo
                 </span>
-              </button>
-              <input
-                ref={cameraInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                className="hidden"
-                onChange={handleFileChange("photos")}
-              />
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={handleFileChange("photos")}
+                />
+              </label>
             </>
           ) : (
             <>
@@ -138,11 +132,7 @@ function AddMediaDrawer({
                 className="hidden"
                 onChange={handleFileChange("documents")}
               />
-
-              <button
-                onClick={() => scanInputRef.current?.click()}
-                className="flex flex-row border bg-white items-center gap-4 w-full rounded-2xl"
-              >
+              <label className="flex flex-row border bg-white items-center gap-4 w-full rounded-2xl cursor-pointer">
                 <div className="p-4 flex items-center justify-center">
                   <IconScan
                     size={24}
@@ -153,15 +143,14 @@ function AddMediaDrawer({
                 <span className="text-base font-semibold text-foreground">
                   Scan Document
                 </span>
-              </button>
-              <input
-                ref={scanInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                className="hidden"
-                onChange={handleFileChange("documents")}
-              />
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={handleFileChange("documents")}
+                />
+              </label>
             </>
           )}
         </div>
