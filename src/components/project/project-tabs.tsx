@@ -14,6 +14,7 @@ import {
 } from "@tabler/icons-react";
 import { Button } from "../ui/button";
 import AddMediaDrawer from "./add-media-drawer";
+import PhotoGrid from "./photo-grid";
 
 type ProjectTabsProps = {
   projectId: string;
@@ -26,8 +27,8 @@ function ProjectTabs({ photos, documents, projectId }: ProjectTabsProps) {
   const [addDrawerOpen, setAddDrawerOpen] = useState(false);
 
   const countBar = (
-    <div className="flex flex-row items-center justify-between">
-      <span className="text-muted-foreground text-sm">
+    <div className="flex flex-row items-center justify-between ">
+      <span className="text-foreground font-semibold text-sm">
         {activeTab === "photos"
           ? `Photos · ${photos?.length ?? 0}`
           : `Documents · ${documents?.length ?? 0}`}
@@ -78,12 +79,14 @@ function ProjectTabs({ photos, documents, projectId }: ProjectTabsProps) {
         </button>
       </div>
       {/*Count Bar + Multi Select & Add Button */}
-      <div className="w-full py-4">{countBar}</div>
+      <div className="w-full pt-4">{countBar}</div>
       {/*Photo Grid and Document List w/ Empty State */}
       <div className="flex flex-col align-middle items-center justify-center">
         {activeTab === "photos" ? (
           photos && photos.length > 0 ? (
-            <div></div>
+            <div className="w-full">
+              <PhotoGrid photos={photos} />
+            </div>
           ) : (
             <>
               <EmptyState
