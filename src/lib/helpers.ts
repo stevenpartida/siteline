@@ -1,4 +1,4 @@
-import { Photo } from "@/types/db";
+import { Photo, Project } from "@/types/db";
 
 export function toLocalDate(date: Date): string {
   const year = date.getFullYear();
@@ -54,4 +54,19 @@ export function groupPhotosByDate(photos: Photo[]): Record<string, Photo[]> {
 export function userInitials(name: string): string {
   const [first, last] = name.split(" ");
   return `${first[0].toUpperCase()}${last[0].toUpperCase()}`;
+}
+
+export function searchProject<T extends Project>(
+  projects: T[],
+  searchQuery: string,
+): T[] {
+  if (!searchQuery.trim()) return projects;
+
+  const searchLower = searchQuery.toLowerCase();
+
+  return projects.filter(
+    (project) =>
+      project.name.toLowerCase().includes(searchLower) ||
+      project.address.toLowerCase().includes(searchLower),
+  );
 }

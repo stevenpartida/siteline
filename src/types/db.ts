@@ -32,3 +32,14 @@ export type Document = {
   storage_path: string;
   uploaded_at: string;
 };
+
+export type Project = {
+  id: string;
+  company_id: string;
+  name: string;
+  address: string;
+  created_at: string;
+  updated_at: string;
+  is_starred: boolean;
+  location: { lat: number; lng: number } | null;
+};

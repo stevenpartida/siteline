@@ -32,7 +32,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={geist.className}>
-      <body className="min-h-screen bg-background text-foreground antialiased">
+      <body className="h-dvh overflow-hidden bg-background text-foreground antialiased">
         {children}
       </body>
     </html>
