@@ -4,7 +4,6 @@ import { formatDate, groupPhotosByDate, userInitials } from "@/lib/helpers";
 import { createClient } from "@/lib/supabase/client";
 import { Photo } from "@/types/db";
 import Image from "next/image";
-import { Avatar, AvatarFallback } from "../ui/avatar";
 
 type PhotoGridProps = {
   photos: Photo[] | null;
