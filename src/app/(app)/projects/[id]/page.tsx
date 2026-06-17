@@ -34,22 +34,26 @@ async function ProjectPage({ params }: ProjectProps) {
     : null;
 
   return (
-    <div>
-      <ProjectHero coverPhotoUrl={coverPhotoUrl} />
-      <div className="p-4">
-        <div className="flex flex-col">
-          <span className="text-2xl text-foreground font-bold ">
+    <div className="h-full flex flex-col">
+      <div className="shrink-0">
+        <ProjectHero coverPhotoUrl={coverPhotoUrl} />
+      </div>
+      <div className="flex-1 min-h-0 flex flex-col pt-4">
+        <div className="flex flex-col shrink-0 px-4">
+          <span className="text-2xl text-foreground font-bold">
             {project.name}
           </span>
           <span className="text-sm text-muted-foreground font-normal">
             {project.address}
           </span>
         </div>
-        <ProjectTabs
-          projectId={id}
-          photos={sortProjectsByRecent}
-          documents={project.documents}
-        />
+        <div className="flex-1 min-h-0">
+          <ProjectTabs
+            projectId={id}
+            photos={sortProjectsByRecent}
+            documents={project.documents}
+          />
+        </div>
       </div>
     </div>
   );

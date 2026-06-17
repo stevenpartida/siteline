@@ -15,6 +15,8 @@ import {
 import { Button } from "../ui/button";
 import AddMediaDrawer from "./add-media-drawer";
 import PhotoGrid from "./photo-grid";
+import DocumentList from "./document-list";
+import { ScrollArea } from "../ui/scroll-area";
 
 type ProjectTabsProps = {
   projectId: string;
@@ -52,43 +54,47 @@ function ProjectTabs({ photos, documents, projectId }: ProjectTabsProps) {
   );
 
   return (
-    <div>
+    <div className="h-full flex flex-col">
       {/*Tab Controls */}
-      <div className="flex w-full rounded-full bg-neutral-200 py-0.5 mt-6 overflow-visible ">
-        <button
-          onClick={() => setActiveTab("photos")}
-          className={cn(
-            "flex-1 rounded-full py-1.5 text-sm font-medium transition-all ",
-            activeTab === "photos"
-              ? "bg-foreground text-background shadow-xl"
-              : "text-muted-foreground",
-          )}
-        >
-          Photos
-        </button>
-        <button
-          onClick={() => setActiveTab("documents")}
-          className={cn(
-            "flex-1 rounded-full py-1.5 text-sm font-medium transition-all ",
-            activeTab === "documents"
-              ? "bg-foreground text-background shadow-xl"
-              : "text-muted-foreground",
-          )}
-        >
-          Documents
-        </button>
+      <div className="px-4 mt-6 shrink-0">
+        <div className="flex w-full rounded-full bg-neutral-200 py-0.5 overflow-visible">
+          <button
+            onClick={() => setActiveTab("photos")}
+            className={cn(
+              "flex-1 rounded-full py-1.5 text-sm font-medium transition-all ",
+              activeTab === "photos"
+                ? "bg-foreground text-background shadow-xl"
+                : "text-muted-foreground",
+            )}
+          >
+            Photos
+          </button>
+          <button
+            onClick={() => setActiveTab("documents")}
+            className={cn(
+              "flex-1 rounded-full py-1.5 text-sm font-medium transition-all ",
+              activeTab === "documents"
+                ? "bg-foreground text-background shadow-xl"
+                : "text-muted-foreground",
+            )}
+          >
+            Documents
+          </button>
+        </div>
       </div>
       {/*Count Bar + Multi Select & Add Button */}
-      <div className="w-full pt-4">{countBar}</div>
+      <div className="w-full py-4 shrink-0 rounded-b-lg px-4">{countBar}</div>
       {/*Photo Grid and Document List w/ Empty State */}
-      <div className="flex flex-col align-middle items-center justify-center">
+      <div className="flex-1 min-h-0 ">
         {activeTab === "photos" ? (
           photos && photos.length > 0 ? (
-            <div className="w-full">
-              <PhotoGrid photos={photos} />
-            </div>
+            <ScrollArea className="h-full w-full ">
+              <div className="w-full px-4 pb-32">
+                <PhotoGrid photos={photos} />
+              </div>
+            </ScrollArea>
           ) : (
-            <>
+            <div className="px-4">
               <EmptyState
                 icon={IconCamera}
                 title="No Photos Yet"
@@ -103,12 +109,16 @@ function ProjectTabs({ photos, documents, projectId }: ProjectTabsProps) {
                 <IconPlus />
                 Add Photo
               </Button>
-            </>
+            </div>
           )
         ) : documents && documents.length > 0 ? (
-          <div></div>
+          <ScrollArea className="h-full w-full ">
+            <div className="w-full mt-4 px-4 pb-32">
+              <DocumentList documents={documents} />
+            </div>
+          </ScrollArea>
         ) : (
-          <>
+          <div className="px-4">
             <EmptyState
               icon={IconFileText}
               title="No Documents Yet"
@@ -123,7 +133,7 @@ function ProjectTabs({ photos, documents, projectId }: ProjectTabsProps) {
               <IconUpload />
               Upload Document
             </Button>
-          </>
+          </div>
         )}
       </div>
       <AddMediaDrawer
