@@ -18,11 +18,6 @@ export async function uploadMediaAction(
     return { error: "User is not authenticated." };
   }
 
-  const {
-    data: { user: authCheck },
-  } = await supabase.auth.getUser();
-  console.log("auth.uid check:", authCheck?.id);
-
   // Fetch user profile
   const { data: profile } = await supabase
     .from("users")
@@ -57,7 +52,7 @@ export async function uploadMediaAction(
     uploaded_by: user.id,
     uploaded_by_name: profile.full_name,
     storage_path: storageData.path,
-    ...(bucket === "documents" && { name: file.name }),
+    ...(bucket === "documents" && { name: file.name, size_bytes: file.size }),
   });
   if (tableError) {
     return { error: `Table: ${tableError.message}` };

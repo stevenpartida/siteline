@@ -1,4 +1,4 @@
-import { Photo, Project } from "@/types/db";
+import { Photo, Project, Document } from "@/types/db";
 
 export function toLocalDate(date: Date): string {
   const year = date.getFullYear();
@@ -16,6 +16,17 @@ export function formatDate(date: Date): string {
   });
 
   return formatter.format(date);
+}
+
+export function formatFileSize(bytes: number | null): string {
+  if (bytes === null) return "—";
+  if (bytes < 1024 * 1024) {
+    const kb = bytes / 1024;
+    return `${kb.toFixed(0)} KB`;
+  }
+
+  const mb = bytes / (1024 * 1024);
+  return `${mb.toFixed(1)} MB`;
 }
 
 export function groupPhotosByDate(photos: Photo[]): Record<string, Photo[]> {
@@ -46,6 +57,40 @@ export function groupPhotosByDate(photos: Photo[]): Record<string, Photo[]> {
       groups[label] = [];
     }
     groups[label].push(photo);
+  }
+
+  return groups;
+}
+
+export function groupDocumentsByDate(
+  documents: Document[],
+): Record<string, Document[]> {
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const todayKey = toLocalDate(today);
+  const yesterdayKey = toLocalDate(yesterday);
+  const groups: Record<string, Document[]> = {};
+
+  for (const document of documents) {
+    const documentDate = new Date(document.uploaded_at);
+    const documentKey = toLocalDate(documentDate);
+
+    let label: string;
+
+    if (documentKey === todayKey) {
+      label = "Today";
+    } else if (documentKey === yesterdayKey) {
+      label = "Yesterday";
+    } else {
+      label = formatDate(documentDate);
+    }
+
+    if (!groups[label]) {
+      groups[label] = [];
+    }
+    groups[label].push(document);
   }
 
   return groups;

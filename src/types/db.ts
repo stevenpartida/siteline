@@ -29,6 +29,7 @@ export type Document = {
   uploaded_by: string;
   uploaded_by_name: string;
   name: string;
+  size_bytes: number | null;
   storage_path: string;
   uploaded_at: string;
 };
