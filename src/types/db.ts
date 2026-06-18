@@ -20,6 +20,8 @@ export type Photo = {
   uploaded_by: string;
   uploaded_by_name: string;
   storage_path: string;
+  location: { lat: number; lng: number } | null;
+  size_bytes: number | null;
   created_at: string;
 };
 

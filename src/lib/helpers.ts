@@ -1,4 +1,5 @@
 import { Photo, Project, Document } from "@/types/db";
+import { Coordinates } from "@/types/location";
 
 export function toLocalDate(date: Date): string {
   const year = date.getFullYear();
@@ -114,4 +115,27 @@ export function searchProject<T extends Project>(
       project.name.toLowerCase().includes(searchLower) ||
       project.address.toLowerCase().includes(searchLower),
   );
+}
+
+export function getCurrentPosition(): Promise<Coordinates> {
+  return Promise.race([
+    new Promise<Coordinates>((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error("Geolocation is not supported by this browser."));
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (position) =>
+          resolve({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          }),
+        (error) => reject(error),
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+      );
+    }),
+    new Promise<Coordinates>((_, reject) =>
+      setTimeout(() => reject(new Error("Geolocation timed out.")), 12000),
+    ),
+  ]);
 }

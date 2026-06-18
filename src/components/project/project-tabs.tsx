@@ -94,7 +94,7 @@ function ProjectTabs({ photos, documents, projectId }: ProjectTabsProps) {
               </div>
             </ScrollArea>
           ) : (
-            <div className="px-4">
+            <div className="px-4 ">
               <EmptyState
                 icon={IconCamera}
                 title="No Photos Yet"

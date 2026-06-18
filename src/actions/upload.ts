@@ -8,6 +8,7 @@ export async function uploadMediaAction(
   file: File,
   bucket: "photos" | "documents",
   projectId: string,
+  location: { lat: number; lng: number } | null = null,
 ): Promise<{ error: string | null }> {
   const cookieStore = await cookies();
   const supabase = await createClient(cookieStore);
@@ -52,7 +53,10 @@ export async function uploadMediaAction(
     uploaded_by: user.id,
     uploaded_by_name: profile.full_name,
     storage_path: storageData.path,
-    ...(bucket === "documents" && { name: file.name, size_bytes: file.size }),
+    size_bytes: file.size,
+    ...(bucket === "photos" &&
+      location && { location: `POINT(${location.lng} ${location.lat})` }),
+    ...(bucket === "documents" && { name: file.name }),
   });
   if (tableError) {
     return { error: `Table: ${tableError.message}` };

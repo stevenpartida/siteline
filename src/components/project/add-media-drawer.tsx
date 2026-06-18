@@ -5,6 +5,8 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
+import { getCurrentPosition } from "@/lib/helpers";
+import { Coordinates } from "@/types/location";
 
 import {
   IconUpload,
@@ -40,7 +42,32 @@ function AddMediaDrawer({
       const file = e.target.files?.[0];
       if (!file) return;
 
-      const { error } = await uploadMediaAction(file, bucket, projectId);
+      let location: Coordinates | null = null;
+
+      if (bucket === "photos") {
+        try {
+          location = await getCurrentPosition();
+        } catch (err) {
+          if (err instanceof GeolocationPositionError) {
+            console.error(
+              "Geolocation failed — code:",
+              err.code,
+              "message:",
+              err.message,
+            );
+          } else {
+            console.error("Geolocation failed:", err);
+          }
+          location = null;
+        }
+      }
+
+      const { error } = await uploadMediaAction(
+        file,
+        bucket,
+        projectId,
+        location,
+      );
 
       if (error) {
         console.error(error);
