@@ -32,6 +32,7 @@ function CreateProjectSheet({
           </DrawerTitle>
         </DrawerHeader>
         <CreateProjectForm
+          isOpen={open}
           onComplete={(result) => {
             if (!result.error) {
               onOpenChange(false);

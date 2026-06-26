@@ -4,25 +4,29 @@ import {
 } from "@/lib/validators/project";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Button } from "../ui/button";
 import { Field, FieldError, FieldLabel } from "../ui/field";
 import { Input } from "../ui/input";
 import { createProjectAction } from "@/actions/project";
+import { getAddressFromCoordsAction } from "@/actions/location";
+import { getCurrentPosition } from "@/lib/helpers";
 import { Spinner } from "../ui/spinner";
 
 type CreateProjectFormProps = {
+  isOpen: boolean; // NEW — drives the autofill trigger
   onComplete: (result: {
     projectId: string | null;
     error: string | null;
   }) => void;
 };
 
-function CreateProjectForm({ onComplete }: CreateProjectFormProps) {
+function CreateProjectForm({ isOpen, onComplete }: CreateProjectFormProps) {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLocating, setIsLocating] = useState(false); // NEW
 
   const form = useForm<CreateProjectFormValues>({
     resolver: zodResolver(createProjectSchema),
@@ -35,6 +39,42 @@ function CreateProjectForm({ onComplete }: CreateProjectFormProps) {
       zip_code: "",
     },
   });
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    let cancelled = false;
+
+    async function autofillAddress() {
+      setIsLocating(true);
+      try {
+        const coords = await getCurrentPosition();
+
+        const result = await getAddressFromCoordsAction(coords);
+        if (!cancelled && result.success) {
+          form.reset({
+            project_name: "",
+            address_line_1: result.address.address_line_1,
+            address_line_2: "",
+            city: result.address.city,
+            state: result.address.state,
+            zip_code: result.address.zip_code,
+          });
+        }
+      } catch {
+        // permission denied, timeout, unsupported — fall through silently,
+        // user fills the form manually. Never block.
+      } finally {
+        if (!cancelled) setIsLocating(false);
+      }
+    }
+
+    autofillAddress();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, form]);
 
   async function onSubmit(values: CreateProjectFormValues) {
     setServerError(null);
@@ -75,9 +115,14 @@ function CreateProjectForm({ onComplete }: CreateProjectFormProps) {
           )}
         />
         <div className="flex flex-col gap-1 mb-4">
-          <FieldLabel className="pl-1 text-foreground text-sm">
-            Address
-          </FieldLabel>
+          <div className="flex items-center gap-2 pl-1">
+            <FieldLabel className="text-foreground text-sm">Address</FieldLabel>
+            {isLocating && (
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Spinner className="size-3" />
+              </span>
+            )}
+          </div>
           <Controller
             name="address_line_1"
             control={form.control}
