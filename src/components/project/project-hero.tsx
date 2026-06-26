@@ -5,9 +5,10 @@ import Link from "next/link";
 
 type ProjectHeroProps = {
   coverPhotoUrl: string | null;
+  projectId: string;
 };
 
-function ProjectHero({ coverPhotoUrl }: ProjectHeroProps) {
+function ProjectHero({ coverPhotoUrl, projectId }: ProjectHeroProps) {
   const navPills = (
     <>
       <Link href="/projects">
@@ -20,9 +21,11 @@ function ProjectHero({ coverPhotoUrl }: ProjectHeroProps) {
         <Button variant="frosted" size="icon-lg" className="rounded-full">
           <IconShare2 stroke={1.5} className="size-4" />
         </Button>
-        <Button variant="frosted" size="icon-lg" className="rounded-full">
-          <IconMenu2 stroke={1.5} className="size-4" />
-        </Button>
+        <Link href={`/projects/${projectId}/settings`}>
+          <Button variant="frosted" size="icon-lg" className="rounded-full">
+            <IconMenu2 stroke={1.5} className="size-4" />
+          </Button>
+        </Link>
       </div>
     </>
   );

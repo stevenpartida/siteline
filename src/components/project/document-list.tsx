@@ -18,7 +18,7 @@ function DocumentList({ documents }: DocumentListProps) {
   const groups = groupDocumentsByDate(documents ?? []);
 
   return (
-    <div className="bg-white rounded-xl px-3 py-2">
+    <div className="bg-white rounded-2xl px-3 py-2">
       {Object.entries(groups).map(([label, groupDocuments]) => {
         const dateLabel = formatDate(new Date(groupDocuments[0].uploaded_at));
         const showDateLabel = label === "Today" || label === "Yesterday";

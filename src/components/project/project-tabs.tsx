@@ -94,7 +94,7 @@ function ProjectTabs({ photos, documents, projectId }: ProjectTabsProps) {
               </div>
             </ScrollArea>
           ) : (
-            <div className="px-4 ">
+            <div className="px-4 py-2 flex flex-col items-center justify-center ">
               <EmptyState
                 icon={IconCamera}
                 title="No Photos Yet"
@@ -118,7 +118,7 @@ function ProjectTabs({ photos, documents, projectId }: ProjectTabsProps) {
             </div>
           </ScrollArea>
         ) : (
-          <div className="px-4">
+          <div className="px-4 py-2 flex flex-col items-center justify-center ">
             <EmptyState
               icon={IconFileText}
               title="No Documents Yet"
