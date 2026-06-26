@@ -44,7 +44,7 @@ export async function updateSession(request: NextRequest) {
 
   // 3. Has user + on auth route → redirect to dashboard
   if (["/sign-in", "/sign-up"].includes(path)) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.redirect(new URL("/projects", request.url));
   }
 
   // 4. Has user + no company → redirect to onboarding
@@ -60,7 +60,7 @@ export async function updateSession(request: NextRequest) {
 
   // 5. Has user + has company + trying to hit onboarding → redirect to dashboard
   if (userData?.company_id && path === "/onboarding") {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.redirect(new URL("/projects", request.url));
   }
 
   // 6. Everything else → let through
