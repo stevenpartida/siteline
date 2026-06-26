@@ -49,7 +49,7 @@ function SignUpForm({ token }: SignUpFormProps) {
         setIsLoading(false);
         return;
       }
-      router.push("/dashboard");
+      router.push("/projects");
       return;
     }
 

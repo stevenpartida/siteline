@@ -22,7 +22,7 @@ function JoinCompanyButton({ token }: JoinCompanyButtonProps) {
         setError(error);
         return;
       }
-      router.push("/dashboard");
+      router.push("/projects");
     } finally {
       setIsLoading(false);
     }

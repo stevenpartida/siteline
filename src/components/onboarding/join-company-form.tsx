@@ -37,7 +37,7 @@ function JoinCompanyForm() {
       return;
     }
     console.log(values);
-    router.push("/dashboard");
+    router.push("/projects");
   }
   return (
     <div className="flex-1 flex flex-col justify-center px-6 pt-safe pb-safe bg-background md:max-w-sm mx-auto w-full">

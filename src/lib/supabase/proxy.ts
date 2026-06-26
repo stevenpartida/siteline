@@ -42,7 +42,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }
 
-  // 3. Has user + on auth route → redirect to dashboard
+  // 3. Has user + on auth route → redirect to projects
   if (["/sign-in", "/sign-up"].includes(path)) {
     return NextResponse.redirect(new URL("/projects", request.url));
   }
@@ -58,7 +58,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(new URL("/onboarding", request.url));
   }
 
-  // 5. Has user + has company + trying to hit onboarding → redirect to dashboard
+  // 5. Has user + has company + trying to hit onboarding → redirect to projects
   if (userData?.company_id && path === "/onboarding") {
     return NextResponse.redirect(new URL("/projects", request.url));
   }
