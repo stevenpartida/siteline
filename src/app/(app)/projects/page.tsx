@@ -14,14 +14,21 @@ type RawProjectRow = {
   created_at: string;
   updated_at: string;
   thumbnail_storage_path: string | null;
+  project_lat: number | null;
+  project_lng: number | null;
 };
 async function ProjectsPage() {
   const cookieStore = await cookies();
   const supabase = await createClient(cookieStore);
 
-  const { data, error } = await supabase.rpc("get_projects_with_thumbnails");
+  const [{ data, error }, { data: userData }] = await Promise.all([
+    supabase.rpc("get_projects_with_thumbnails"),
+    supabase.from("users").select("full_name").single(),
+  ]);
 
   if (error) throw error;
+
+  const firstName = userData?.full_name?.split(" ")[0] ?? "";
 
   const projects: ProjectWithThumbnail[] = (
     (data ?? []) as RawProjectRow[]
@@ -38,9 +45,11 @@ async function ProjectsPage() {
       ? supabase.storage.from("photos").getPublicUrl(row.thumbnail_storage_path)
           .data.publicUrl
       : null,
+    project_lat: row.project_lat,
+    project_lng: row.project_lng,
   }));
 
-  return <ProjectsView projects={projects} />;
+  return <ProjectsView projects={projects} firstName={firstName} />;
 }
 
 export default ProjectsPage;

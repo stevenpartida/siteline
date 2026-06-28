@@ -2,12 +2,19 @@ import { ProjectWithThumbnail } from "@/types/project";
 import EmptyState from "./empty-state";
 import { IconFolderOff, IconFolderPlus } from "@tabler/icons-react";
 import { ProjectCard } from "./project-card";
+import type { Coordinates } from "@/types/location";
 
 type ProjectsListProps = {
   projects: ProjectWithThumbnail[];
   isSearching: boolean;
+  userCoords: Coordinates | null;
 };
-function ProjectsList({ projects, isSearching }: ProjectsListProps) {
+
+function ProjectsList({
+  projects,
+  isSearching,
+  userCoords,
+}: ProjectsListProps) {
   if (projects.length === 0 && !isSearching) {
     return (
       <EmptyState
@@ -38,6 +45,9 @@ function ProjectsList({ projects, isSearching }: ProjectsListProps) {
           address={project.address}
           isStarred={project.is_starred}
           thumbnailUrl={project.thumbnail_url}
+          projectLat={project.project_lat}
+          projectLng={project.project_lng}
+          userCoords={userCoords}
         />
       ))}
     </div>
