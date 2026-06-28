@@ -2,6 +2,8 @@
 
 import type { Coordinates } from "@/types/location";
 import type { CreateProjectFormValues } from "@/lib/validators/project";
+import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 
 interface MapboxAddressContext {
   address_number?: string;
@@ -88,4 +90,49 @@ export async function getAddressFromCoordsAction(
   } catch {
     return { success: false, error: "Failed to reach geocoding service" };
   }
+}
+
+export async function findProjectsNearAction(coords: Coordinates) {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+
+  const { data, error } = await supabase.rpc("find_projects_near", {
+    lat: coords.lat,
+    lng: coords.lng,
+    radius_m: 100,
+  });
+
+  if (error) return { data: null, error: error.message };
+  if (!data) return { data: [], error: null };
+
+  const resolved = data.map(
+    (row: {
+      id: string;
+      name: string;
+      address: string;
+      thumbnail_path: string | null;
+      photo_count: number;
+      last_photo_at: string | null;
+      project_lat: number;
+      project_lng: number;
+    }) => {
+      const thumbnailUrl = row.thumbnail_path
+        ? supabase.storage.from("photos").getPublicUrl(row.thumbnail_path).data
+            .publicUrl
+        : null;
+
+      return {
+        id: row.id,
+        name: row.name,
+        address: row.address,
+        thumbnailUrl,
+        photoCount: row.photo_count,
+        lastPhotoAt: row.last_photo_at,
+        projectLat: row.project_lat,
+        projectLng: row.project_lng,
+      };
+    },
+  );
+
+  return { data: resolved, error: null };
 }

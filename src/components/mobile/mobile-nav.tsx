@@ -13,22 +13,27 @@ import {
 
 interface MobileNavProps {
   onAddProject?: () => void;
+  onCameraCapture: (file: File) => void;
+  onCameraButtonPress?: () => void;
 }
 
-export default function MobileNav({ onAddProject }: MobileNavProps) {
+export default function MobileNav({
+  onAddProject,
+  onCameraCapture,
+  onCameraButtonPress,
+}: MobileNavProps) {
   const pathname = usePathname();
   const isOnProjects = pathname === "/projects";
 
   const openCamera = () => {
+    onCameraButtonPress?.();
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*";
     input.capture = "environment";
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        console.log("photo captured:", file.name);
-      }
+      if (file) onCameraCapture(file); // was: console.log("photo captured:", file.name)
     };
     input.click();
   };
