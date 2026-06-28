@@ -50,6 +50,10 @@ export async function createProjectAction(
   const { address_line_1, address_line_2, city, state, zip_code } =
     parseData.data;
 
+  const lat = formData.get("lat");
+  const lng = formData.get("lng");
+  const location = lat && lng ? `POINT(${lng} ${lat})` : null;
+
   const address = `${address_line_1}${address_line_2 ? `, ${address_line_2}` : ""}, ${city}, ${state} ${zip_code}`;
 
   // Insert project into the project table
@@ -59,6 +63,7 @@ export async function createProjectAction(
       name: projectName,
       company_id: userData.company_id,
       address: address,
+      ...(location ? { location } : {}),
     })
     .select()
     .single();

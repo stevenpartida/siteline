@@ -9,9 +9,11 @@ import CreateProjectForm from "./create-project-form";
 function CreateProjectSheet({
   open,
   onOpenChange,
+  onProjectCreated,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onProjectCreated?: (projectId: string) => void;
 }) {
   return (
     <Drawer
@@ -36,6 +38,9 @@ function CreateProjectSheet({
           onComplete={(result) => {
             if (!result.error) {
               onOpenChange(false);
+              if (result.projectId) {
+                onProjectCreated?.(result.projectId);
+              }
             }
           }}
         />

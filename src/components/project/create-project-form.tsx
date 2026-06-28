@@ -4,7 +4,7 @@ import {
 } from "@/lib/validators/project";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Button } from "../ui/button";
 import { Field, FieldError, FieldLabel } from "../ui/field";
@@ -13,6 +13,7 @@ import { createProjectAction } from "@/actions/project";
 import { getAddressFromCoordsAction } from "@/actions/location";
 import { getCurrentPosition } from "@/lib/helpers";
 import { Spinner } from "../ui/spinner";
+import { Coordinates } from "@/types/location";
 
 type CreateProjectFormProps = {
   isOpen: boolean; // NEW — drives the autofill trigger
@@ -26,8 +27,8 @@ function CreateProjectForm({ isOpen, onComplete }: CreateProjectFormProps) {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isLocating, setIsLocating] = useState(false); // NEW
-
+  const [isLocating, setIsLocating] = useState(false);
+  const [coords, setCoords] = useState<Coordinates | null>(null);
   const form = useForm<CreateProjectFormValues>({
     resolver: zodResolver(createProjectSchema),
     defaultValues: {
@@ -49,7 +50,7 @@ function CreateProjectForm({ isOpen, onComplete }: CreateProjectFormProps) {
       setIsLocating(true);
       try {
         const coords = await getCurrentPosition();
-
+        setCoords(coords);
         const result = await getAddressFromCoordsAction(coords);
         if (!cancelled && result.success) {
           form.reset({
@@ -83,6 +84,11 @@ function CreateProjectForm({ isOpen, onComplete }: CreateProjectFormProps) {
     Object.entries(values).forEach(([key, value]) => {
       if (value) formData.append(key, value);
     });
+
+    if (coords) {
+      formData.append("lat", coords.lat.toString());
+      formData.append("lng", coords.lng.toString());
+    }
 
     const result = await createProjectAction(formData);
     if (result.error) {
