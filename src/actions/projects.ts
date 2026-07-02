@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
 export async function toggleProjectStarredAction(
@@ -16,4 +17,6 @@ export async function toggleProjectStarredAction(
     .eq("id", projectId);
 
   if (error) throw new Error(error.message);
+
+  revalidatePath("/projects");
 }

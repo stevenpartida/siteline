@@ -19,7 +19,9 @@ async function ProjectSettingsPage({ params }: ProjectSettingsProps) {
 
   const { data, error } = await supabase
     .from("projects")
-    .select(`id, name, address, created_at, photos(count) , documents(count)`)
+    .select(
+      `id, name, address, created_at, is_starred, photos(count) , documents(count)`,
+    )
     .eq("id", id)
     .single();
 
@@ -37,6 +39,7 @@ async function ProjectSettingsPage({ params }: ProjectSettingsProps) {
     name: data.name,
     address: data.address,
     created_at: data.created_at,
+    is_starred: data.is_starred,
     photoCount: data.photos[0].count,
     docCount: data.documents[0].count,
   };
@@ -51,7 +54,10 @@ async function ProjectSettingsPage({ params }: ProjectSettingsProps) {
         />
       </div>
       <div>
-        <ProjectSettingsActions />
+        <ProjectSettingsActions
+          id={projectSettings.id}
+          isStarred={projectSettings.is_starred}
+        />
       </div>
       <div>
         <ProjectDirectionButton address={projectSettings.address} />

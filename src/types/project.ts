@@ -8,7 +8,7 @@ export type ProjectWithThumbnail = Project & {
 
 export type ProjectSettings = Pick<
   Project,
-  "id" | "name" | "address" | "created_at"
+  "id" | "name" | "address" | "created_at" | "is_starred"
 > & {
   photoCount: number;
   docCount: number;
