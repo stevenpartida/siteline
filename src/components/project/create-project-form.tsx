@@ -4,7 +4,7 @@ import {
 } from "@/lib/validators/project";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Button } from "../ui/button";
 import { Field, FieldError, FieldLabel } from "../ui/field";
@@ -13,10 +13,9 @@ import { createProjectAction } from "@/actions/project";
 import { getAddressFromCoordsAction } from "@/actions/location";
 import { getCurrentPosition } from "@/lib/helpers";
 import { Spinner } from "../ui/spinner";
-import { Coordinates } from "@/types/location";
 
 type CreateProjectFormProps = {
-  isOpen: boolean; // NEW — drives the autofill trigger
+  isOpen: boolean;
   onComplete: (result: {
     projectId: string | null;
     error: string | null;
@@ -28,7 +27,7 @@ function CreateProjectForm({ isOpen, onComplete }: CreateProjectFormProps) {
   const [serverError, setServerError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
-  const [coords, setCoords] = useState<Coordinates | null>(null);
+
   const form = useForm<CreateProjectFormValues>({
     resolver: zodResolver(createProjectSchema),
     defaultValues: {
@@ -50,7 +49,6 @@ function CreateProjectForm({ isOpen, onComplete }: CreateProjectFormProps) {
       setIsLocating(true);
       try {
         const coords = await getCurrentPosition();
-        setCoords(coords);
         const result = await getAddressFromCoordsAction(coords);
         if (!cancelled && result.success) {
           form.reset({
@@ -63,8 +61,7 @@ function CreateProjectForm({ isOpen, onComplete }: CreateProjectFormProps) {
           });
         }
       } catch {
-        // permission denied, timeout, unsupported — fall through silently,
-        // user fills the form manually. Never block.
+        // permission denied, timeout, unsupported — fall through silently
       } finally {
         if (!cancelled) setIsLocating(false);
       }
@@ -85,11 +82,6 @@ function CreateProjectForm({ isOpen, onComplete }: CreateProjectFormProps) {
       if (value) formData.append(key, value);
     });
 
-    if (coords) {
-      formData.append("lat", coords.lat.toString());
-      formData.append("lng", coords.lng.toString());
-    }
-
     const result = await createProjectAction(formData);
     if (result.error) {
       setServerError(result.error);
@@ -99,8 +91,9 @@ function CreateProjectForm({ isOpen, onComplete }: CreateProjectFormProps) {
     onComplete({ projectId: result.projectId, error: null });
     router.push(`/projects/${result.projectId}`);
   }
+
   return (
-    <div className="flex-1 flex-col pb-12 px-4  w-full">
+    <div className="flex-1 flex-col pb-12 px-4 w-full">
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <Controller
           name="project_name"

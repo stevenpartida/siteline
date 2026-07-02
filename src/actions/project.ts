@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { getAuthUser } from "./auth";
 import { createProjectSchema } from "@/lib/validators/project";
 import { redirect } from "next/navigation";
+import { forwardGeocodeAddress } from "./location";
 
 export async function createProjectAction(
   formData: FormData,
@@ -50,11 +51,12 @@ export async function createProjectAction(
   const { address_line_1, address_line_2, city, state, zip_code } =
     parseData.data;
 
-  const lat = formData.get("lat");
-  const lng = formData.get("lng");
-  const location = lat && lng ? `POINT(${lng} ${lat})` : null;
-
   const address = `${address_line_1}${address_line_2 ? `, ${address_line_2}` : ""}, ${city}, ${state} ${zip_code}`;
+
+  // Forward geocode the submitted address — always reflects the actual
+  // job site location, not the device's GPS at form-open time
+  const geocoded = await forwardGeocodeAddress(address);
+  const location = geocoded ? `POINT(${geocoded.lng} ${geocoded.lat})` : null;
 
   // Insert project into the project table
   const { data: project, error: projectError } = await supabase
@@ -67,9 +69,11 @@ export async function createProjectAction(
     })
     .select()
     .single();
+
   if (projectError) {
     return { error: "Failed to create project", projectId: null };
   }
+
   return { error: null, projectId: project.id };
 }
 

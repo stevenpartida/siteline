@@ -136,3 +136,38 @@ export async function findProjectsNearAction(coords: Coordinates) {
 
   return { data: resolved, error: null };
 }
+
+export async function forwardGeocodeAddress(
+  address: string,
+): Promise<{ lat: number; lng: number } | null> {
+  const params = new URLSearchParams({
+    q: address,
+    access_token: process.env.MAPBOX_ACCESS_TOKEN ?? "",
+    limit: "1",
+    country: "us",
+  });
+
+  try {
+    const response = await fetch(
+      `https://api.mapbox.com/search/geocode/v6/forward?${params}`,
+    );
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    const feature = data.features?.[0];
+
+    if (!feature) return null;
+
+    // Only trust address-level results with at least a "low" confidence match
+    // Reject postcodes, places, or locality-level fallbacks
+    if (feature.properties.feature_type !== "address") return null;
+    if (feature.properties.match_code?.confidence === "not_applicable")
+      return null;
+
+    const [lng, lat] = feature.geometry.coordinates;
+    return { lat, lng };
+  } catch {
+    return null;
+  }
+}
