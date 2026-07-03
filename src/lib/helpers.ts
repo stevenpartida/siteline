@@ -170,3 +170,10 @@ export function formatRelativeTime(dateString: string | null): string {
   if (hours < 24) return `${hours}h ago`;
   return `${days}d ago`;
 }
+
+export function getGreating(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Morning";
+  if (hour < 18) return "Afternoon";
+  return "Evening";
+}
