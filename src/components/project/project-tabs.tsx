@@ -94,7 +94,7 @@ function ProjectTabs({ photos, documents, projectId }: ProjectTabsProps) {
               </div>
             </ScrollArea>
           ) : (
-            <div className="px-4 py-2 flex flex-col items-center justify-center ">
+            <div className="px-4  flex flex-col items-center justify-center ">
               <EmptyState
                 icon={IconCamera}
                 title="No Photos Yet"
@@ -103,7 +103,7 @@ function ProjectTabs({ photos, documents, projectId }: ProjectTabsProps) {
               <Button
                 variant="default"
                 size="lg"
-                className="rounded-3xl font-semibold"
+                className="font-semibold px-4 py-5 rounded-full"
                 onClick={() => setAddDrawerOpen(true)}
               >
                 <IconPlus />
@@ -118,7 +118,7 @@ function ProjectTabs({ photos, documents, projectId }: ProjectTabsProps) {
             </div>
           </ScrollArea>
         ) : (
-          <div className="px-4 py-2 flex flex-col items-center justify-center ">
+          <div className="px-4 flex flex-col items-center justify-center ">
             <EmptyState
               icon={IconFileText}
               title="No Documents Yet"
@@ -127,7 +127,7 @@ function ProjectTabs({ photos, documents, projectId }: ProjectTabsProps) {
             <Button
               variant="default"
               size="lg"
-              className="rounded-3xl font-semibold"
+              className="font-semibold px-4 py-5 rounded-full"
               onClick={() => setAddDrawerOpen(true)}
             >
               <IconUpload />
