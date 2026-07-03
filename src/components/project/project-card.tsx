@@ -81,12 +81,11 @@ export function ProjectCard({
       )}
 
       {/* Gradient scrim */}
-      {/* Gradient scrim */}
       <div
         className={`absolute inset-0 bg-linear-to-t ${
           thumbnailUrl
             ? "from-black/70 via-black/10 to-transparent"
-            : "from-black/20 via-black/5 to-transparent"
+            : "from-black/40 via-black/10 to-transparent"
         }`}
       />
 
