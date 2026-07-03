@@ -39,7 +39,7 @@ export default function MobileNav({
   };
 
   return (
-    <nav className="fixed bottom-8 left-4 right-4 z-50 max-w-lg mx-auto">
+    <nav className="fixed bottom-8 left-4 right-4 z-50 max-w-xs mx-auto">
       <div className="flex items-center justify-around bg-card border border-border rounded-full px-6 py-3 shadow-sm">
         {/* Left slot — Add Project on /projects, Projects link elsewhere */}
         {isOnProjects ? (
