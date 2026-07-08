@@ -6,7 +6,10 @@ import MobileNav from "@/components/mobile/mobile-nav";
 import CreateProjectSheet from "@/components/project/create-project-sheet";
 import ProjectPickerDrawer from "@/components/project/project-picker-drawer";
 import { getCurrentPosition } from "@/lib/helpers";
-import { findProjectsNearAction } from "@/actions/location";
+import {
+  findProjectsNearAction,
+  getAllProjectsAction,
+} from "@/actions/location";
 import { uploadMediaAction } from "@/actions/upload";
 import type { Coordinates } from "@/types/location";
 
@@ -22,8 +25,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       thumbnailUrl: string | null;
       photoCount: number;
       lastPhotoAt: string | null;
-      projectLat: number;
-      projectLng: number;
+      projectLat: number | null;
+      projectLng: number | null;
     }>
   >([]);
   const [pickerCoords, setPickerCoords] = useState<Coordinates | null>(null);
@@ -42,8 +45,22 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     gpsRef.current = null;
 
     if (!coords) {
+      // GPS failed entirely — fall back to a searchable list of all
+      // company projects instead of routing straight to project creation.
+      const { data: allProjects, error } = await getAllProjectsAction();
+
+      if (error || !allProjects || allProjects.length === 0) {
+        pendingFileRef.current = file;
+        setSheetOpen(true);
+        return;
+      }
+
       pendingFileRef.current = file;
-      setSheetOpen(true);
+      pendingCoordsRef.current = null;
+      setPickerProjects(allProjects);
+      setPickerCoords(null);
+      setCapturedFile(file);
+      setPickerOpen(true);
       return;
     }
 

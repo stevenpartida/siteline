@@ -171,3 +171,44 @@ export async function forwardGeocodeAddress(
     return null;
   }
 }
+
+export async function getAllProjectsAction() {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+
+  const { data, error } = await supabase.rpc("find_all_projects");
+
+  if (error) return { data: null, error: error.message };
+  if (!data) return { data: [], error: null };
+
+  const resolved = data.map(
+    (row: {
+      id: string;
+      name: string;
+      address: string;
+      thumbnail_path: string | null;
+      photo_count: number;
+      last_photo_at: string | null;
+      project_lat: number | null;
+      project_lng: number | null;
+    }) => {
+      const thumbnailUrl = row.thumbnail_path
+        ? supabase.storage.from("photos").getPublicUrl(row.thumbnail_path).data
+            .publicUrl
+        : null;
+
+      return {
+        id: row.id,
+        name: row.name,
+        address: row.address,
+        thumbnailUrl,
+        photoCount: row.photo_count,
+        lastPhotoAt: row.last_photo_at,
+        projectLat: row.project_lat,
+        projectLng: row.project_lng,
+      };
+    },
+  );
+
+  return { data: resolved, error: null };
+}

@@ -97,7 +97,7 @@ function ProjectsView({ projects, firstName }: ProjectsViewProps) {
           totalCount={projects.length}
         />
         <div className="px-4">
-          <InputGroup className="py-5">
+          <InputGroup className="py-5 rounded-full">
             <InputGroupInput
               type="text"
               value={searchQuery}

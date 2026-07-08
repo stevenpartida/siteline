@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import {
   Drawer,
@@ -10,16 +10,21 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   IconMapPin,
   IconPlus,
   IconCheck,
   IconMapPinFilled,
   IconCircleCheckFilled,
+  IconPhoto,
+  IconSearch,
 } from "@tabler/icons-react";
 import { Badge } from "../ui/badge";
 import { haversineDistance, formatRelativeTime } from "@/lib/helpers";
 import type { Coordinates } from "@/types/location";
+
+const RECENT_LIMIT = 4;
 
 interface NearbyProject {
   id: string;
@@ -28,8 +33,8 @@ interface NearbyProject {
   thumbnailUrl: string | null;
   photoCount: number;
   lastPhotoAt: string | null;
-  projectLat: number;
-  projectLng: number;
+  projectLat: number | null;
+  projectLng: number | null;
 }
 
 type ProjectPickerDrawerProps = {
@@ -52,17 +57,47 @@ function ProjectPickerDrawer({
   onCreateNew,
 }: ProjectPickerDrawerProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleOpenChange = (open: boolean) => {
-    if (!open) setSelectedId(null);
+    if (!open) {
+      setSelectedId(null);
+      setSearchQuery("");
+    }
     onOpenChange(open);
   };
 
   const selectedProject =
     (selectedId ? projects.find((p) => p.id === selectedId) : null) ??
-    projects[0];
-  const otherProjects = projects.filter((p) => p.id !== selectedProject?.id);
-  const isGpsMatch = selectedProject?.id === projects[0]?.id;
+    (userCoords ? projects[0] : null);
+
+  const isGpsMatch =
+    userCoords !== null && selectedProject?.id === projects[0]?.id;
+
+  const isSearching = !userCoords && searchQuery.trim().length > 0;
+
+  const filteredProjects = useMemo(() => {
+    if (!searchQuery.trim()) return projects;
+    const q = searchQuery.toLowerCase();
+    return projects.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) || p.address.toLowerCase().includes(q),
+    );
+  }, [projects, searchQuery]);
+
+  // GPS flow: show every proximity match (already a short list).
+  // Fallback, no search yet: cap to the most recent N — this is what
+  // keeps the list short enough that Create New Project never needs
+  // its own scroll handling.
+  // Fallback, actively searching: show filtered matches — could exceed
+  // the cap, but that's a deliberate user action, not the default state.
+  const baseList = userCoords
+    ? projects
+    : isSearching
+      ? filteredProjects
+      : projects.slice(0, RECENT_LIMIT);
+
+  const listProjects = baseList.filter((p) => p.id !== selectedProject?.id);
 
   const getDistance = (project: NearbyProject): string => {
     if (!userCoords || !project.projectLat || !project.projectLng) return "";
@@ -86,7 +121,9 @@ function ProjectPickerDrawer({
             Save to project
           </DrawerTitle>
           <DrawerDescription>
-            Nearby job sites based on your location
+            {userCoords
+              ? "Nearby job sites based on your location"
+              : "Couldn't detect your location — search or create new"}
           </DrawerDescription>
         </DrawerHeader>
 
@@ -116,10 +153,26 @@ function ProjectPickerDrawer({
                 <IconMapPin stroke={1.5} size={14} />
                 {userCoords
                   ? `${userCoords.lat.toFixed(4)}, ${userCoords.lng.toFixed(4)}`
-                  : "Locating..."}
+                  : "Location unavailable"}
               </span>
             </div>
           </div>
+
+          {/* Search — fallback flow only */}
+          {!userCoords && (
+            <div className="relative">
+              <IconSearch
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search projects by name or address"
+                className="pl-9 h-11 rounded-full"
+              />
+            </div>
+          )}
 
           {/* Primary / selected project */}
           {selectedProject && (
@@ -152,7 +205,12 @@ function ProjectPickerDrawer({
                     className="w-12 h-12 rounded-xl object-cover shrink-0"
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded-xl bg-muted shrink-0" />
+                  <div className="w-12 h-12 flex rounded-lg bg-muted shrink-0 items-center justify-center">
+                    <IconPhoto
+                      stroke={2}
+                      className="size-5 text-muted-foreground"
+                    />
+                  </div>
                 )}
                 <div className="flex flex-col gap-0.5">
                   <span className="text-base font-semibold text-foreground">
@@ -175,13 +233,17 @@ function ProjectPickerDrawer({
             </div>
           )}
 
-          {/* Other nearby projects */}
-          {otherProjects.length > 0 && (
+          {/* Other projects */}
+          {listProjects.length > 0 && (
             <div className="flex flex-col gap-2">
               <span className="text-xs font-medium text-muted-foreground tracking-wide px-1">
-                OR ANOTHER NEARBY
+                {userCoords
+                  ? "OR ANOTHER NEARBY"
+                  : isSearching
+                    ? "SEARCH RESULTS"
+                    : "RECENT PROJECTS"}
               </span>
-              {otherProjects.map((project) => (
+              {listProjects.map((project) => (
                 <button
                   key={project.id}
                   onClick={() => setSelectedId(project.id)}
@@ -197,7 +259,12 @@ function ProjectPickerDrawer({
                         className="w-10 h-10 rounded-lg object-cover shrink-0"
                       />
                     ) : (
-                      <div className="w-10 h-10 rounded-lg bg-muted shrink-0" />
+                      <div className="w-10 h-10 flex rounded-lg bg-muted shrink-0 items-center justify-center">
+                        <IconPhoto
+                          stroke={2}
+                          className="size-5 text-muted-foreground"
+                        />
+                      </div>
                     )}
                     <div className="flex flex-col gap-0.5">
                       <span className="text-sm font-medium text-foreground">
@@ -215,6 +282,12 @@ function ProjectPickerDrawer({
                 </button>
               ))}
             </div>
+          )}
+
+          {isSearching && filteredProjects.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No projects match &quot;{searchQuery}&quot;
+            </p>
           )}
 
           {/* Create new escape hatch */}
