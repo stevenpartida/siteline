@@ -21,10 +21,9 @@ import {
   IconSearch,
 } from "@tabler/icons-react";
 import { Badge } from "../ui/badge";
+import { cn } from "@/lib/utils";
 import { haversineDistance, formatRelativeTime } from "@/lib/helpers";
 import type { Coordinates } from "@/types/location";
-
-const RECENT_LIMIT = 4;
 
 interface NearbyProject {
   id: string;
@@ -59,12 +58,31 @@ function ProjectPickerDrawer({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Covers Drawer-internal closes (swipe, backdrop tap) — Vaul calls this
+  // itself, so it never touches useEffect / the sync setState issue.
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       setSelectedId(null);
       setSearchQuery("");
     }
     onOpenChange(open);
+  };
+
+  // Covers parent-driven closes: onSelect/onCreateNew typically trigger
+  // setDrawerOpen(false) directly in the parent, which bypasses
+  // handleOpenChange above entirely (no Vaul-internal trigger fires).
+  // Reset at the point of confirmation instead, so nothing stale
+  // survives to the next open regardless of how the parent closes it.
+  const handleSelect = (projectId: string) => {
+    setSelectedId(null);
+    setSearchQuery("");
+    onSelect(projectId);
+  };
+
+  const handleCreateNew = () => {
+    setSelectedId(null);
+    setSearchQuery("");
+    onCreateNew();
   };
 
   const selectedProject =
@@ -85,19 +103,23 @@ function ProjectPickerDrawer({
     );
   }, [projects, searchQuery]);
 
-  // GPS flow: show every proximity match (already a short list).
-  // Fallback, no search yet: cap to the most recent N — this is what
-  // keeps the list short enough that Create New Project never needs
-  // its own scroll handling.
-  // Fallback, actively searching: show filtered matches — could exceed
-  // the cap, but that's a deliberate user action, not the default state.
-  const baseList = userCoords
-    ? projects
-    : isSearching
-      ? filteredProjects
-      : projects.slice(0, RECENT_LIMIT);
+  // GPS flow: every proximity match (already a short list).
+  // Fallback flow: all projects by default, filtered results while
+  // searching. No cap — scroll handles overflow now.
+  const baseList = isSearching ? filteredProjects : projects;
 
-  const listProjects = baseList.filter((p) => p.id !== selectedProject?.id);
+  // GPS flow pulls the top match into its own card above, so the list
+  // excludes it. Fallback flow shows every project inline, selection
+  // highlighted in place instead.
+  const listProjects = userCoords
+    ? baseList.filter((p) => p.id !== selectedProject?.id)
+    : baseList;
+
+  const sectionLabel = userCoords
+    ? "OR ANOTHER NEARBY"
+    : isSearching
+      ? "SEARCH RESULTS"
+      : "ALL PROJECTS";
 
   const getDistance = (project: NearbyProject): string => {
     if (!userCoords || !project.projectLat || !project.projectLng) return "";
@@ -113,10 +135,10 @@ function ProjectPickerDrawer({
   return (
     <Drawer open={open} onOpenChange={handleOpenChange} direction="bottom">
       <DrawerContent
-        className="rounded-t-3xl bg-background"
+        className="rounded-t-3xl bg-background flex flex-col overflow-hidden max-h-[80dvh]"
         aria-describedby={undefined}
       >
-        <DrawerHeader className="items-baseline">
+        <DrawerHeader className="items-baseline shrink-0">
           <DrawerTitle className="text-xl font-bold text-foreground">
             Save to project
           </DrawerTitle>
@@ -127,7 +149,8 @@ function ProjectPickerDrawer({
           </DrawerDescription>
         </DrawerHeader>
 
-        <div className="flex flex-col px-4 pb-12 gap-4">
+        {/* Fixed zone — preview, search, GPS-match selection. Never scrolls. */}
+        <div className="flex flex-col px-4 gap-4 shrink-0">
           {/* Captured photo preview */}
           <div className="flex items-center gap-3">
             {capturedFile ? (
@@ -174,8 +197,10 @@ function ProjectPickerDrawer({
             </div>
           )}
 
-          {/* Primary / selected project */}
-          {selectedProject && (
+          {/* Primary / selected project — GPS flow only. Fallback flow
+              shows selection inline in the list instead (more rows
+              visible when there's no distance data to lean on). */}
+          {userCoords && selectedProject && (
             <div className="flex flex-col gap-3 p-4 rounded-2xl border border-foreground bg-foreground/5">
               <div className="flex items-center justify-between">
                 <Badge>
@@ -225,62 +250,117 @@ function ProjectPickerDrawer({
               </div>
               <Button
                 className="w-full h-12 rounded-full items-center"
-                onClick={() => onSelect(selectedProject.id)}
+                onClick={() => handleSelect(selectedProject.id)}
               >
                 <IconCheck />
                 Add Photo
               </Button>
             </div>
           )}
+        </div>
 
-          {/* Other projects */}
+        {/* Scrollable zone — only the list scrolls; section label stays
+            pinned to the top of it while scrolling. */}
+        <div className="flex-1 min-h-0 overflow-y-auto px-4">
           {listProjects.length > 0 && (
-            <div className="flex flex-col gap-2">
-              <span className="text-xs font-medium text-muted-foreground tracking-wide px-1">
-                {userCoords
-                  ? "OR ANOTHER NEARBY"
-                  : isSearching
-                    ? "SEARCH RESULTS"
-                    : "RECENT PROJECTS"}
-              </span>
-              {listProjects.map((project) => (
-                <button
-                  key={project.id}
-                  onClick={() => setSelectedId(project.id)}
-                  className="flex items-center justify-between p-4 rounded-xl bg-card border border-border text-left"
-                >
-                  <div className="flex items-center gap-3">
-                    {project.thumbnailUrl ? (
-                      <Image
-                        src={project.thumbnailUrl}
-                        alt={project.name}
-                        width={40}
-                        height={40}
-                        className="w-10 h-10 rounded-lg object-cover shrink-0"
+            <div className="flex flex-col">
+              <div className="sticky top-0 z-10 bg-background pt-4 pb-2">
+                <span className="text-xs font-medium text-muted-foreground tracking-wide px-1">
+                  {sectionLabel}
+                </span>
+              </div>
+              <div className="flex flex-col gap-2 pb-4">
+                {listProjects.map((project) => {
+                  const isSelected = project.id === selectedId;
+                  const thumbnail = project.thumbnailUrl ? (
+                    <Image
+                      src={project.thumbnailUrl}
+                      alt={project.name}
+                      width={40}
+                      height={40}
+                      className="w-10 h-10 rounded-lg object-cover shrink-0"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 flex rounded-lg bg-muted shrink-0 items-center justify-center">
+                      <IconPhoto
+                        stroke={2}
+                        className="size-5 text-muted-foreground"
                       />
-                    ) : (
-                      <div className="w-10 h-10 flex rounded-lg bg-muted shrink-0 items-center justify-center">
-                        <IconPhoto
-                          stroke={2}
-                          className="size-5 text-muted-foreground"
-                        />
-                      </div>
-                    )}
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-sm font-medium text-foreground">
-                        {project.name}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {project.photoCount}{" "}
-                        {project.photoCount === 1 ? "photo" : "photos"}
-                      </span>
                     </div>
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    {getDistance(project)}
-                  </span>
-                </button>
-              ))}
+                  );
+
+                  // GPS flow: plain row, distance-forward. Tapping
+                  // reassigns the top card above.
+                  if (userCoords) {
+                    return (
+                      <button
+                        key={project.id}
+                        onClick={() => setSelectedId(project.id)}
+                        className="flex items-center justify-between p-4 rounded-xl bg-card border border-border text-left"
+                      >
+                        <div className="flex items-center gap-3">
+                          {thumbnail}
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-sm font-medium text-foreground">
+                              {project.name}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {project.photoCount}{" "}
+                              {project.photoCount === 1 ? "photo" : "photos"}
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {getDistance(project)}
+                        </span>
+                      </button>
+                    );
+                  }
+
+                  // Fallback flow: compact toggle-select row, selection
+                  // shown in place. Tapping the already-selected row
+                  // clears it — a second tap deselects.
+                  return (
+                    <button
+                      key={project.id}
+                      onClick={() =>
+                        setSelectedId(isSelected ? null : project.id)
+                      }
+                      className={cn(
+                        "flex items-center justify-between p-4 rounded-xl border text-left transition-colors",
+                        isSelected
+                          ? "border-foreground bg-foreground/5"
+                          : "border-border bg-card",
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        {thumbnail}
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-sm font-medium text-foreground">
+                            {project.name}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {project.photoCount}{" "}
+                            {project.photoCount === 1 ? "photo" : "photos"}
+                          </span>
+                        </div>
+                      </div>
+                      <div
+                        className={cn(
+                          "size-5 rounded-full border flex items-center justify-center shrink-0",
+                          isSelected
+                            ? "bg-foreground border-foreground"
+                            : "border-muted-foreground",
+                        )}
+                      >
+                        {isSelected && (
+                          <IconCheck size={12} className="text-background" />
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
 
@@ -289,15 +369,32 @@ function ProjectPickerDrawer({
               No projects match &quot;{searchQuery}&quot;
             </p>
           )}
+        </div>
 
-          {/* Create new escape hatch */}
-          <button
-            onClick={onCreateNew}
-            className="flex items-center justify-center gap-2 p-4 rounded-full border border-muted-foreground text-sm font-medium text-foreground"
-          >
-            <IconPlus size={16} />
-            Create New Project
-          </button>
+        {/* Fixed footer — always visible. Single button that swaps
+            meaning based on selection state in the fallback flow:
+            "Create New Project" by default, "Save Here" once a
+            project's selected. Keeps footer height minimal, which
+            matters most when the on-screen keyboard is competing
+            for space during search. */}
+        <div className="px-4 pt-3 pb-[max(1.5rem,env(safe-area-inset-bottom))] shrink-0 border-t border-border">
+          {!userCoords && selectedProject ? (
+            <Button
+              className="w-full h-12 rounded-full items-center"
+              onClick={() => handleSelect(selectedProject.id)}
+            >
+              <IconCheck />
+              Save Here
+            </Button>
+          ) : (
+            <button
+              onClick={handleCreateNew}
+              className="flex items-center justify-center gap-2 p-4 rounded-full border border-muted-foreground text-sm font-medium text-foreground w-full"
+            >
+              <IconPlus size={16} />
+              Create New Project
+            </button>
+          )}
         </div>
       </DrawerContent>
     </Drawer>
