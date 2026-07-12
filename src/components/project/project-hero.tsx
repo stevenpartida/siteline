@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import { Button } from "../ui/button";
 import { IconChevronLeft, IconShare2, IconMenu2 } from "@tabler/icons-react";
@@ -6,26 +8,54 @@ import Link from "next/link";
 type ProjectHeroProps = {
   coverPhotoUrl: string | null;
   projectId: string;
+  disabled: boolean;
+  onShareClick: () => void;
 };
 
-function ProjectHero({ coverPhotoUrl, projectId }: ProjectHeroProps) {
+function ProjectHero({
+  coverPhotoUrl,
+  projectId,
+  disabled,
+  onShareClick,
+}: ProjectHeroProps) {
+  const backButton = disabled ? (
+    <Button variant="frosted" size="icon-lg" className="rounded-full" disabled>
+      <IconChevronLeft stroke={1.5} className="size-4" />
+    </Button>
+  ) : (
+    <Link href="/projects">
+      <Button variant="frosted" size="icon-lg" className="rounded-full">
+        <IconChevronLeft stroke={1.5} className="size-4" />
+      </Button>
+    </Link>
+  );
+
+  const menuButton = disabled ? (
+    <Button variant="frosted" size="icon-lg" className="rounded-full" disabled>
+      <IconMenu2 stroke={1.5} className="size-4" />
+    </Button>
+  ) : (
+    <Link href={`/projects/${projectId}/settings`}>
+      <Button variant="frosted" size="icon-lg" className="rounded-full">
+        <IconMenu2 stroke={1.5} className="size-4" />
+      </Button>
+    </Link>
+  );
+
   const navPills = (
     <>
-      <Link href="/projects">
-        <Button variant="frosted" size="icon-lg" className="rounded-full">
-          <IconChevronLeft stroke={1.5} className="size-4" />
-        </Button>
-      </Link>
-
+      {backButton}
       <div className="flex gap-2">
-        <Button variant="frosted" size="icon-lg" className="rounded-full">
+        <Button
+          variant="frosted"
+          size="icon-lg"
+          className="rounded-full"
+          disabled={disabled}
+          onClick={onShareClick}
+        >
           <IconShare2 stroke={1.5} className="size-4" />
         </Button>
-        <Link href={`/projects/${projectId}/settings`}>
-          <Button variant="frosted" size="icon-lg" className="rounded-full">
-            <IconMenu2 stroke={1.5} className="size-4" />
-          </Button>
-        </Link>
+        {menuButton}
       </div>
     </>
   );

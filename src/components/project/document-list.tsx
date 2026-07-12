@@ -5,16 +5,25 @@ import {
   formatFileSize,
   groupDocumentsByDate,
 } from "@/lib/helpers";
+import { cn } from "@/lib/utils";
 
 import { Document } from "@/types/db";
-import { IconFileText } from "@tabler/icons-react";
+import { IconCheck, IconFileText } from "@tabler/icons-react";
 import React from "react";
 
 type DocumentListProps = {
   documents: Document[] | null;
+  selectionMode: boolean;
+  selectedIds: Set<string>;
+  onToggleSelect: (id: string) => void;
 };
 
-function DocumentList({ documents }: DocumentListProps) {
+function DocumentList({
+  documents,
+  selectionMode,
+  selectedIds,
+  onToggleSelect,
+}: DocumentListProps) {
   const groups = groupDocumentsByDate(documents ?? []);
 
   return (
@@ -26,10 +35,22 @@ function DocumentList({ documents }: DocumentListProps) {
           <div key={label} className="flex flex-col gap-4">
             {groupDocuments.map((document) => {
               const documentSize = formatFileSize(document.size_bytes);
+              const isSelected = selectedIds.has(document.id);
               return (
                 <div
                   key={document.id}
-                  className="grid grid-cols-[auto_1fr_auto] gap-3 items-center text-foreground py-2"
+                  onClick={
+                    selectionMode
+                      ? () => onToggleSelect(document.id)
+                      : undefined
+                  }
+                  className={cn(
+                    "grid gap-3 items-center text-foreground py-2 rounded-lg px-2 -mx-2",
+                    selectionMode
+                      ? "grid-cols-[auto_1fr_auto_auto] cursor-pointer"
+                      : "grid-cols-[auto_1fr_auto]",
+                    isSelected && "bg-blue-50 ring-1 ring-blue-600",
+                  )}
                 >
                   <div className="flex w-10 h-10 bg-gray-100 rounded-md items-center justify-center shrink-0">
                     <IconFileText size={24} stroke={1.5} />
@@ -47,6 +68,24 @@ function DocumentList({ documents }: DocumentListProps) {
                       {documentSize}
                     </span>
                   </div>
+                  {selectionMode && (
+                    <div
+                      className={cn(
+                        "flex items-center justify-center size-5 rounded-full border-2 shrink-0",
+                        isSelected
+                          ? "bg-blue-600 border-blue-600"
+                          : "bg-white border-gray-300",
+                      )}
+                    >
+                      {isSelected && (
+                        <IconCheck
+                          size={14}
+                          stroke={3}
+                          className="text-white"
+                        />
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
