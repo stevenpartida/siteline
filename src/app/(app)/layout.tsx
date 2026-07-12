@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import MobileNav from "@/components/mobile/mobile-nav";
@@ -12,9 +13,14 @@ import {
 } from "@/actions/location";
 import { uploadMediaAction } from "@/actions/upload";
 import type { Coordinates } from "@/types/location";
+import {
+  NavVisibilityProvider,
+  useNavVisibility,
+} from "@/lib/nav-visibility-context";
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+function AppLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const { hidden } = useNavVisibility();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerProjects, setPickerProjects] = useState<
@@ -116,6 +122,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="relative h-dvh flex flex-col max-w-lg mx-auto">
+      <div
+        aria-hidden="true"
+        className={cn(
+          "absolute inset-0 z-60 pointer-events-none transition-opacity duration-300",
+          hidden ? "opacity-100" : "opacity-0",
+        )}
+        style={{
+          boxShadow:
+            "inset 0 0 0 3px #2563eb, inset 0 0 60px 14px rgba(37, 99, 235, 0.45)",
+        }}
+      />
       <main className="flex-1 overflow-hidden">{children}</main>
       <CreateProjectSheet
         open={sheetOpen}
@@ -131,11 +148,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         onSelect={handleProjectPicked}
         onCreateNew={handleCreateNew}
       />
-      <MobileNav
-        onAddProject={() => setSheetOpen(true)}
-        onCameraCapture={handleCameraCapture}
-        onCameraButtonPress={handleCameraButtonPress}
-      />
+      {!hidden && (
+        <MobileNav
+          onAddProject={() => setSheetOpen(true)}
+          onCameraCapture={handleCameraCapture}
+          onCameraButtonPress={handleCameraButtonPress}
+        />
+      )}
     </div>
+  );
+}
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <NavVisibilityProvider>
+      <AppLayoutInner>{children}</AppLayoutInner>
+    </NavVisibilityProvider>
   );
 }
