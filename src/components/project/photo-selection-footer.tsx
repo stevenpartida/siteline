@@ -2,8 +2,22 @@
 "use client";
 
 import { useState } from "react";
-import { IconX, IconShare2, IconDots } from "@tabler/icons-react";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "../ui/drawer";
+import {
+  IconX,
+  IconShare2,
+  IconDots,
+  IconDownload,
+  IconTrash,
+  IconLayoutGrid,
+  IconChevronRight,
+} from "@tabler/icons-react";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from "../ui/drawer";
 import { cn } from "@/lib/utils";
 
 type PhotoSelectionFooterProps = {
@@ -70,30 +84,61 @@ function PhotoSelectionFooter({
       </nav>
 
       <Drawer open={moreDrawerOpen} onOpenChange={setMoreDrawerOpen}>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>
-              {selectedCount} photo{selectedCount === 1 ? "" : "s"} selected
+        <DrawerContent className="bg-background" aria-describedby={undefined}>
+          <DrawerHeader className="flex-1 items-start">
+            <DrawerTitle className="text-xl font-bold">
+              Manage Photos
             </DrawerTitle>
+            <DrawerDescription>
+              {selectedCount} photo{selectedCount === 1 ? "" : "s"} selected
+            </DrawerDescription>
           </DrawerHeader>
           <div className="flex flex-col gap-2 px-4 pb-6">
             <button
-              className="flex items-center gap-3 rounded-lg px-3 py-3 text-left hover:bg-muted"
+              className="flex items-center justify-between gap-3 rounded-2xl px-3 py-3 text-left hover:bg-muted bg-white border border-border"
               onClick={() => {
                 // download handler — batch download lands next week
                 setMoreDrawerOpen(false);
               }}
             >
-              <span className="font-medium">Download to device</span>
+              <div className="flex flex-row items-center gap-4">
+                <div className="h-12 w-12 bg-[#2F6FEB]/10 flex items-center justify-center rounded-lg text-[#2563eb]">
+                  <IconDownload size={20} stroke={2} />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-semibold text-sm">
+                    Download to Device
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    Save the selected photos to your phone
+                  </span>
+                </div>
+              </div>
+              <div>
+                <IconChevronRight size={16} stroke={1.5} />
+              </div>
             </button>
             <button
-              className="flex items-center gap-3 rounded-lg px-3 py-3 text-left text-red-600 hover:bg-red-50"
+              className="flex items-center justify-between gap-3 rounded-2xl px-3 py-3 text-left hover:bg-muted bg-white border border-border"
               onClick={() => {
                 // delete handler — batch delete lands next week
                 setMoreDrawerOpen(false);
               }}
             >
-              <span className="font-medium">Delete</span>
+              <div className="flex flex-row items-center gap-4">
+                <div className="h-12 w-12 bg-[#2F6FEB]/10 flex items-center justify-center rounded-lg text-[#2563eb]">
+                  <IconTrash size={20} stroke={2} />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-semibold text-sm">Delete</span>
+                  <span className="text-xs text-muted-foreground">
+                    Delete selected photos from the project
+                  </span>
+                </div>
+              </div>
+              <div>
+                <IconChevronRight size={16} stroke={1.5} />
+              </div>
             </button>
           </div>
         </DrawerContent>

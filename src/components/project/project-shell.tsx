@@ -5,6 +5,7 @@ import { Photo, Document } from "@/types/db";
 import ProjectHero from "@/components/project/project-hero";
 import ProjectTabs from "@/components/project/project-tabs";
 import { useNavVisibility } from "@/lib/nav-visibility-context";
+import ShareDrawer from "./share-drawer";
 
 type ProjectShellProps = {
   projectId: string;
@@ -66,7 +67,7 @@ function ProjectShell({
         setSelectionMode(true);
         return;
       }
-      // generate share link with `type` — wired once the token model lands
+      console.log("would generate link:", type, [...selectedIds]); // temporary
     },
     [selectedIds],
   );
@@ -106,6 +107,11 @@ function ProjectShell({
         </div>
       </div>
       {/* share drawer component goes here once built */}
+      <ShareDrawer
+        open={shareDrawerOpen}
+        onOpenChange={setShareDrawerOpen}
+        onTypeSelect={handleShareTypeSelect}
+      />
     </div>
   );
 }
