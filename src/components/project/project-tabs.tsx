@@ -18,7 +18,6 @@ import PhotoGrid from "./photo-grid";
 import DocumentList from "./document-list";
 import PhotoSelectionFooter from "./photo-selection-footer";
 import DocumentSelectionFooter from "./document-selection-footer";
-import { ScrollArea } from "../ui/scroll-area";
 
 type ProjectTabsProps = {
   projectId: string;
@@ -101,9 +100,9 @@ function ProjectTabs({
   );
 
   return (
-    <div className="h-full flex flex-col">
+    <div>
       {/*Tab Controls */}
-      <div className="px-4 mt-6 shrink-0">
+      <div className="px-4 mt-6">
         <div className="flex w-full rounded-full bg-neutral-200 py-0.5 overflow-visible">
           <button
             disabled={selectionMode}
@@ -134,23 +133,19 @@ function ProjectTabs({
         </div>
       </div>
       {/*Count Bar + Multi Select & Add Button */}
-      <div className="w-full py-4 shrink-0 rounded-b-lg px-4">{countBar}</div>
+      <div className="w-full py-4 rounded-b-lg px-4">{countBar}</div>
       {/*Photo Grid and Document List w/ Empty State */}
-      <div className="flex-1 min-h-0 ">
+      <div className="px-4 pb-32">
         {activeTab === "photos" ? (
           photos && photos.length > 0 ? (
-            <ScrollArea className="h-full w-full ">
-              <div className="w-full px-4 pb-32">
-                <PhotoGrid
-                  photos={photos}
-                  selectionMode={selectionMode}
-                  selectedIds={selectedIds}
-                  onToggleSelect={onToggleSelect}
-                />
-              </div>
-            </ScrollArea>
+            <PhotoGrid
+              photos={photos}
+              selectionMode={selectionMode}
+              selectedIds={selectedIds}
+              onToggleSelect={onToggleSelect}
+            />
           ) : (
-            <div className="px-4  flex flex-col items-center justify-center ">
+            <div className="flex flex-col items-center justify-center">
               <EmptyState
                 icon={IconCamera}
                 title="No Photos Yet"
@@ -168,18 +163,16 @@ function ProjectTabs({
             </div>
           )
         ) : documents && documents.length > 0 ? (
-          <ScrollArea className="h-full w-full ">
-            <div className="w-full mt-4 px-4 pb-32">
-              <DocumentList
-                documents={documents}
-                selectionMode={selectionMode}
-                selectedIds={selectedIds}
-                onToggleSelect={onToggleSelect}
-              />
-            </div>
-          </ScrollArea>
+          <div className="mt-4">
+            <DocumentList
+              documents={documents}
+              selectionMode={selectionMode}
+              selectedIds={selectedIds}
+              onToggleSelect={onToggleSelect}
+            />
+          </div>
         ) : (
-          <div className="px-4 flex flex-col items-center justify-center ">
+          <div className="flex flex-col items-center justify-center">
             <EmptyState
               icon={IconFileText}
               title="No Documents Yet"

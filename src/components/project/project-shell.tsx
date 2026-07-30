@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Photo, Document } from "@/types/db";
 import ProjectHero from "@/components/project/project-hero";
 import ProjectTabs from "@/components/project/project-tabs";
 import { useNavVisibility } from "@/lib/nav-visibility-context";
 import ShareDrawer from "./share-drawer";
+import { generateShareLink } from "@/actions/share";
 
 type ProjectShellProps = {
   projectId: string;
@@ -27,6 +28,19 @@ function ProjectShell({
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [shareDrawerOpen, setShareDrawerOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Hero image is 208px (h-52) and lives 68px behind the sticky bar (via -mt-17),
+  // so the bar is fully off the hero once the container has scrolled 140px.
+  const HERO_PAST_THRESHOLD = coverPhotoUrl ? 140 : 0;
+
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const next = el.scrollTop > HERO_PAST_THRESHOLD;
+    setScrolled((prev) => (prev === next ? prev : next));
+  }, [HERO_PAST_THRESHOLD]);
 
   const { setHidden } = useNavVisibility();
 
@@ -61,52 +75,62 @@ function ProjectShell({
   }, []);
 
   const handleShareTypeSelect = useCallback(
-    (type: "gallery" | "timeline") => {
+    async (type: "gallery" | "timeline") => {
       setShareDrawerOpen(false);
+
       if (selectedIds.size === 0) {
         setSelectionMode(true);
         return;
       }
-      console.log("would generate link:", type, [...selectedIds]); // temporary
+
+      const photoIds = Array.from(selectedIds);
+      const result = await generateShareLink(projectId, photoIds, type);
+
+      if (!result.ok) {
+        console.error("Share link failed:", result.error);
+        alert(`Share failed: ${result.error}`);
+        return;
+      }
+
+      const url = `${window.location.origin}/share/${result.token}`;
+      console.log("Share URL:", url);
+      alert(url); // temporary — copy into an incognito tab to test
+
+      setSelectionMode(false);
+      setSelectedIds(new Set());
     },
-    [selectedIds],
+    [selectedIds, projectId],
   );
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="shrink-0">
-        <ProjectHero
-          coverPhotoUrl={coverPhotoUrl}
-          projectId={projectId}
-          disabled={selectionMode}
-          onShareClick={() => setShareDrawerOpen(true)}
-        />
+    <div ref={scrollRef} onScroll={handleScroll} className="h-full overflow-y-auto">
+      <ProjectHero
+        coverPhotoUrl={coverPhotoUrl}
+        projectId={projectId}
+        disabled={selectionMode}
+        scrolled={scrolled}
+        onShareClick={() => setShareDrawerOpen(true)}
+      />
+      <div className="flex flex-col px-4 pt-4">
+        <span className="text-2xl text-foreground font-bold">
+          {projectName}
+        </span>
+        <span className="text-sm text-muted-foreground font-normal">
+          {projectAddress}
+        </span>
       </div>
-      <div className="flex-1 min-h-0 flex flex-col pt-4">
-        <div className="flex flex-col shrink-0 px-4">
-          <span className="text-2xl text-foreground font-bold">
-            {projectName}
-          </span>
-          <span className="text-sm text-muted-foreground font-normal">
-            {projectAddress}
-          </span>
-        </div>
-        <div className="flex-1 min-h-0">
-          <ProjectTabs
-            projectId={projectId}
-            photos={photos}
-            documents={documents}
-            selectionMode={selectionMode}
-            selectedIds={selectedIds}
-            onEnterSelection={onEnterSelection}
-            onExitSelection={onExitSelection}
-            onToggleSelect={onToggleSelect}
-            onSelectAll={onSelectAll}
-            onShareClick={() => setShareDrawerOpen(true)}
-          />
-        </div>
-      </div>
-      {/* share drawer component goes here once built */}
+      <ProjectTabs
+        projectId={projectId}
+        photos={photos}
+        documents={documents}
+        selectionMode={selectionMode}
+        selectedIds={selectedIds}
+        onEnterSelection={onEnterSelection}
+        onExitSelection={onExitSelection}
+        onToggleSelect={onToggleSelect}
+        onSelectAll={onSelectAll}
+        onShareClick={() => setShareDrawerOpen(true)}
+      />
       <ShareDrawer
         open={shareDrawerOpen}
         onOpenChange={setShareDrawerOpen}

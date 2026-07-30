@@ -4,11 +4,13 @@ import Image from "next/image";
 import { Button } from "../ui/button";
 import { IconChevronLeft, IconShare2, IconMenu2 } from "@tabler/icons-react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 type ProjectHeroProps = {
   coverPhotoUrl: string | null;
   projectId: string;
   disabled: boolean;
+  scrolled: boolean;
   onShareClick: () => void;
 };
 
@@ -16,6 +18,7 @@ function ProjectHero({
   coverPhotoUrl,
   projectId,
   disabled,
+  scrolled,
   onShareClick,
 }: ProjectHeroProps) {
   const backButton = disabled ? (
@@ -42,28 +45,34 @@ function ProjectHero({
     </Link>
   );
 
-  const navPills = (
-    <>
-      {backButton}
-      <div className="flex gap-2">
-        <Button
-          variant="frosted"
-          size="icon-lg"
-          className="rounded-full"
-          disabled={disabled}
-          onClick={onShareClick}
-        >
-          <IconShare2 stroke={1.5} className="size-4" />
-        </Button>
-        {menuButton}
-      </div>
-    </>
+  const shareButton = (
+    <Button
+      variant="frosted"
+      size="icon-lg"
+      className="rounded-full"
+      disabled={disabled}
+      onClick={onShareClick}
+    >
+      <IconShare2 stroke={1.5} className="size-4" />
+    </Button>
   );
 
   return (
-    <div>
+    <>
+      <div
+        className={cn(
+          "sticky top-0 z-40 flex justify-between p-4 pointer-events-none transition-colors duration-200",
+          scrolled && "bg-background/70 backdrop-blur-md",
+        )}
+      >
+        <div className="pointer-events-auto">{backButton}</div>
+        <div className="pointer-events-auto flex gap-2">
+          {shareButton}
+          {menuButton}
+        </div>
+      </div>
       {coverPhotoUrl ? (
-        <div className="relative h-52 w-full">
+        <div className="relative h-52 w-full -mt-17">
           <Image
             src={coverPhotoUrl}
             alt="Project cover photo"
@@ -73,14 +82,9 @@ function ProjectHero({
             priority
           />
           <div className="absolute inset-0 bg-black/20" />
-          <div className="absolute inset-x-0 top-0 flex justify-between p-4">
-            {navPills}
-          </div>
         </div>
-      ) : (
-        <div className="flex justify-between p-4">{navPills}</div>
-      )}
-    </div>
+      ) : null}
+    </>
   );
 }
 
