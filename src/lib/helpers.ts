@@ -1,4 +1,4 @@
-import { Photo, Project, Document } from "@/types/db";
+import { Project, Document, SharedPhoto } from "@/types/db";
 import { Coordinates } from "@/types/location";
 
 export function toLocalDate(date: Date): string {
@@ -9,14 +9,40 @@ export function toLocalDate(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-export function formatDate(date: Date): string {
+export function formatDate(
+  date: Date,
+  opts: { year?: boolean } = { year: true },
+): string {
   const formatter = new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
-    year: "numeric",
+    ...(opts.year ? { year: "numeric" } : {}),
   });
-
   return formatter.format(date);
+}
+
+export function formatTime(date: Date): string {
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }); // 2:15 PM
+}
+
+export function getDateRange(photos: SharedPhoto[]): string {
+  if (photos.length === 0) return "";
+
+  let earliest = photos[0].created_at;
+  let latest = photos[0].created_at;
+  for (const photo of photos) {
+    if (photo.created_at < earliest) earliest = photo.created_at;
+    if (photo.created_at > latest) latest = photo.created_at;
+  }
+
+  const start = formatDate(new Date(earliest), { year: false });
+  const end = formatDate(new Date(latest), { year: false });
+
+  return start === end ? start : `${start} – ${end}`;
 }
 
 export function formatFileSize(bytes: number | null): string {
@@ -30,7 +56,9 @@ export function formatFileSize(bytes: number | null): string {
   return `${mb.toFixed(1)} MB`;
 }
 
-export function groupPhotosByDate(photos: Photo[]): Record<string, Photo[]> {
+export function groupPhotosByDate<T extends { created_at: string }>(
+  photos: T[],
+): Record<string, T[]> {
   const today = new Date();
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
@@ -38,9 +66,16 @@ export function groupPhotosByDate(photos: Photo[]): Record<string, Photo[]> {
   const todayKey = toLocalDate(today);
   const yesterdayKey = toLocalDate(yesterday);
 
-  const groups: Record<string, Photo[]> = {};
+  // Newest first — so day-groups insert in reverse-chronological order,
+  // and photos within each day are newest-first too.
+  const sorted = [...photos].sort(
+    (a, b) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  );
 
-  for (const photo of photos) {
+  const groups: Record<string, T[]> = {};
+
+  for (const photo of sorted) {
     const photoDate = new Date(photo.created_at);
     const photoKey = toLocalDate(photoDate);
 
@@ -100,6 +135,16 @@ export function groupDocumentsByDate(
 export function userInitials(name: string): string {
   const [first, last] = name.split(" ");
   return `${first[0].toUpperCase()}${last[0].toUpperCase()}`;
+}
+
+export function companyFirstTwoInitals(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((word) => word[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 }
 
 export function searchProject<T extends Project>(
