@@ -134,6 +134,6 @@
     @apply bg-background text-foreground antialiased;
   }
   html {
-    @apply font-sans overflow-hidden;
+    @apply font-sans;
   }
 }
