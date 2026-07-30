@@ -46,3 +46,25 @@ export type Project = {
   is_starred: boolean;
   location: { lat: number; lng: number } | null;
 };
+
+export type ShareViewType = "gallery" | "timeline";
+
+export type ShareLink = {
+  id: string;
+  token: string;
+  project_id: string;
+  created_by: string;
+  created_at: string;
+  view_type: ShareViewType;
+};
+
+export type SharedPhoto = {
+  id: string;
+  created_at: string;
+  url: string;
+};
+
+export type ShareLinkPhoto = {
+  share_link_id: string;
+  photo_id: string;
+};

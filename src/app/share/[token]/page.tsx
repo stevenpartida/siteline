@@ -1,0 +1,79 @@
+import SharePageClient from "@/components/share/share-page-client";
+import { groupPhotosByDate } from "@/lib/helpers";
+import { createServiceClient } from "@/lib/supabase/server";
+import { SharedPhoto } from "@/types/db";
+import { notFound } from "next/navigation";
+import React from "react";
+
+type SharePageProps = {
+  params: Promise<{ token: string }>;
+};
+
+async function SharePage({ params }: SharePageProps) {
+  const { token } = await params;
+  const supabase = createServiceClient();
+
+  // Resolve the token → share link. This is the auth gate: no row = 404.
+  const { data: shareLink, error: shareLinkError } = await supabase
+    .from("share_links")
+    .select("id, project_id, view_type")
+    .eq("token", token)
+    .single();
+
+  if (shareLinkError || !shareLink) {
+    notFound();
+  }
+
+  // Project header info + the owning company name (FK embed, aliased for readability).
+  const { data: project } = await supabase
+    .from("projects")
+    .select("name, address, company:companies(name)")
+    .eq("id", shareLink.project_id)
+    .single();
+
+  if (!project) {
+    notFound();
+  }
+
+  // Fetch photos THROUGH the join, scoped to this link — never by project_id.
+  const { data: grantedPhotoRows, error: grantedPhotosError } = await supabase
+    .from("share_link_photos")
+    .select("photos(id, storage_path, created_at)")
+    .eq("share_link_id", shareLink.id);
+
+  if (grantedPhotosError) {
+    notFound();
+  }
+
+  // Unwrap the nested embed into a flat list of photo rows.
+  const grantedPhotos = (grantedPhotoRows ?? [])
+    .flatMap((row) => row.photos)
+    .filter((photo): photo is NonNullable<typeof photo> => photo !== null);
+
+  // Resolve storage paths into public URLs (photos live in a public bucket).
+  const sharedPhotos: SharedPhoto[] = grantedPhotos.map((photo) => {
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("photos").getPublicUrl(photo.storage_path);
+    return { id: photo.id, created_at: photo.created_at, url: publicUrl };
+  });
+
+  const company = Array.isArray(project.company)
+    ? project.company[0]
+    : project.company;
+
+  console.log(company);
+
+  return (
+    <SharePageClient
+      companyName={company.name}
+      projectName={project.name}
+      projectAddress={project.address}
+      viewType={shareLink.view_type}
+      sharedPhotos={sharedPhotos}
+      token={token}
+    />
+  );
+}
+
+export default SharePage;
