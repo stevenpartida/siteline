@@ -1,104 +1,46 @@
-"use client";
-import { signInAction } from "@/actions/auth";
+import SignInForm from "@/components/auth/sign-in-form";
 import { Button } from "@/components/ui/button";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { signInSchema, type SignInFormValues } from "@/lib/validators/auth";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+
+import { IconChevronLeft } from "@tabler/icons-react";
+import Link from "next/link";
 
 function SignInPage() {
-  const router = useRouter();
-  const [serverError, setServerError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const form = useForm<SignInFormValues>({
-    resolver: zodResolver(signInSchema),
-    defaultValues: { email: "", password: "" },
-  });
-
-  async function onSubmit(values: SignInFormValues) {
-    setIsLoading(true);
-    const formData = new FormData();
-    formData.append("email", values.email);
-    formData.append("password", values.password);
-
-    const result = await signInAction(formData);
-    if (result.error) {
-      setServerError(result.error);
-      setIsLoading(false);
-      return;
-    }
-    router.push("/projects");
-  }
-
   return (
-    <div className="flex-1 flex flex-col justify-center px-6 pt-safe pb-safe bg-background md:max-w-sm mx-auto w-full">
+    <main className="flex flex-col h-dvh px-6 ">
+      {/* Back Button */}
+      <div className="py-4">
+        <Button
+          asChild
+          variant="frosted"
+          size="icon-lg"
+          className="rounded-full"
+        >
+          <Link href="/">
+            <IconChevronLeft stroke={1.5} className="size-4" />
+          </Link>
+        </Button>
+      </div>
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight">Sign In</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Please enter required details.
+      <div className="flex flex-col items-start my-8">
+        <h1 className="text-3xl font-semibold tracking-tight">Weclome Back</h1>
+        <p className="text-sm font-normal text-muted-foreground tracking-tight ">
+          Enter your details to sign in.
         </p>
       </div>
-
-      {/*Form*/}
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        method="post"
-        className="space-y-4"
-      >
-        <Controller
-          name="email"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid || undefined}>
-              <FieldLabel>Email</FieldLabel>
-              <Input
-                {...field}
-                placeholder="Email Address"
-                autoComplete="email"
-                inputMode="email"
-              />
-              <FieldError>{fieldState.error?.message}</FieldError>
-            </Field>
-          )}
-        ></Controller>
-
-        <Controller
-          name="password"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid || undefined}>
-              <FieldLabel>Password</FieldLabel>
-              <Input
-                {...field}
-                type="password"
-                placeholder="Password"
-                autoComplete="current-password"
-              />
-              <FieldError>{fieldState.error?.message}</FieldError>
-            </Field>
-          )}
-        />
-
-        {serverError && (
-          <p className="text-sm text-destructive">{serverError}</p>
-        )}
-
-        <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
-          {isLoading ? "Logging in..." : "Continue"}
-        </Button>
-      </form>
-      <p className="text-sm text-center text-muted-foreground mt-6">
-        Forgot password?{" "}
-        <a href="/reset-password" className="text-primary font-medium">
-          Reset Password
-        </a>
-      </p>
-    </div>
+      <div className="w-full">
+        <SignInForm />
+      </div>
+      <div className="mt-auto w-full pb-[max(2.5rem,env(safe-area-inset-bottom))]">
+        <div className="flex flex-row items-center justify-center">
+          <p className="text-xs font-normal text-muted-foreground">
+            New to Siteline?
+          </p>
+          <Button asChild size="xs" variant="link" className="px-1">
+            <Link href="/sign-up">Get Started</Link>
+          </Button>
+        </div>
+      </div>
+    </main>
   );
 }
 

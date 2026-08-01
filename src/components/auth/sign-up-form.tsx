@@ -5,12 +5,25 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-
+import {
+  IconAlertCircle,
+  IconMail,
+  IconArrowRight,
+  IconLock,
+  IconCircleCheckFilled,
+  IconCircle,
+} from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { signUpAction } from "@/actions/auth";
 import { joinCompanyAction } from "@/actions/invite";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "../ui/input-group";
+import { cn } from "@/lib/utils";
 
 type SignUpFormProps = {
   token?: string;
@@ -23,7 +36,7 @@ function SignUpForm({ token }: SignUpFormProps) {
 
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
-    defaultValues: { full_name: "", email: "", password: "" },
+    defaultValues: { first_name: "", last_name: "", email: "", password: "" },
   });
 
   async function onSubmit(values: SignUpFormValues) {
@@ -31,7 +44,8 @@ function SignUpForm({ token }: SignUpFormProps) {
     setIsLoading(true);
 
     const formData = new FormData();
-    formData.append("full_name", values.full_name);
+    formData.append("first_name", values.first_name);
+    formData.append("last_name", values.last_name);
     formData.append("email", values.email);
     formData.append("password", values.password);
 
@@ -56,61 +70,164 @@ function SignUpForm({ token }: SignUpFormProps) {
     router.push("/onboarding");
   }
 
+  const pwd = form.watch("password");
+
+  const rules = [
+    { label: "At least 8 characters", met: pwd.length >= 8 },
+    { label: "At least 1 uppercase letter (A–Z)", met: /[A-Z]/.test(pwd) },
+    { label: "At least 1 number (0–9)", met: /[0-9]/.test(pwd) },
+    { label: "At least 1 special character (!@#$…)", met: /[^\w\s]/.test(pwd) },
+  ];
+
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-      <Controller
-        name="full_name"
-        control={form.control}
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid || undefined}>
-            <FieldLabel>Your Name</FieldLabel>
-            <Input
-              {...field}
-              placeholder="John Smith"
-              autoComplete="off"
-              inputMode="text"
-            />
-            <FieldError>{fieldState.error?.message}</FieldError>
-          </Field>
+    <form
+      onSubmit={form.handleSubmit(onSubmit)}
+      className="flex flex-1 flex-col space-y-4"
+    >
+      <section className="flex flex-col gap-4">
+        <div className="flex flex-row items-center justify-between gap-3">
+          <Controller
+            name="first_name"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid || undefined}>
+                <FieldLabel>First Name</FieldLabel>
+                <Input
+                  {...field}
+                  placeholder="John"
+                  autoComplete="off"
+                  inputMode="text"
+                />
+                {fieldState.error && (
+                  <FieldError className="flex flex-row gap-1 items-center text-xs">
+                    <IconAlertCircle size={14} />
+                    {fieldState.error.message}
+                  </FieldError>
+                )}
+              </Field>
+            )}
+          />
+          <Controller
+            name="last_name"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid || undefined}>
+                <FieldLabel>Last Name</FieldLabel>
+                <Input
+                  {...field}
+                  placeholder="Doe"
+                  autoComplete="off"
+                  inputMode="text"
+                />
+                {fieldState.error && (
+                  <FieldError className="flex flex-row gap-1 items-center text-xs">
+                    <IconAlertCircle size={14} />
+                    {fieldState.error.message}
+                  </FieldError>
+                )}
+              </Field>
+            )}
+          />
+        </div>
+        <Controller
+          name="email"
+          control={form.control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid || undefined}>
+              <FieldLabel htmlFor="email">Email</FieldLabel>
+              <InputGroup className="gap-1 items-center align-middle">
+                <InputGroupAddon>
+                  <IconMail className="size-4" />
+                </InputGroupAddon>
+                <InputGroupInput
+                  {...field}
+                  id="email"
+                  placeholder="you@company.com"
+                  autoComplete="email"
+                  inputMode="email"
+                />
+              </InputGroup>
+              {fieldState.error && (
+                <FieldError className="flex flex-row gap-1 items-center text-xs">
+                  <IconAlertCircle size={14} />
+                  {fieldState.error.message}
+                </FieldError>
+              )}
+            </Field>
+          )}
+        />
+        <Controller
+          name="password"
+          control={form.control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid || undefined}>
+              <FieldLabel>Password</FieldLabel>
+              <InputGroup className="gap-1 items-center align-middle">
+                <InputGroupAddon>
+                  <IconLock className="size-4" />
+                </InputGroupAddon>
+                <InputGroupInput
+                  {...field}
+                  type="password"
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                />
+              </InputGroup>
+              {fieldState.error && (
+                <FieldError className="flex flex-row gap-1 items-center text-xs">
+                  <IconAlertCircle size={14} />
+                  {fieldState.error.message}
+                </FieldError>
+              )}
+            </Field>
+          )}
+        />
+        {pwd.length > 0 && (
+          <div className="rounded-xl bg-white p-4">
+            <ul className="space-y-2 text-xs">
+              {rules.map((r) => (
+                <li
+                  key={r.label}
+                  className={cn(
+                    "flex items-center gap-2 transition-colors",
+                    r.met ? "text-foreground" : "text-muted-foreground",
+                  )}
+                >
+                  {r.met ? (
+                    <IconCircleCheckFilled
+                      size={18}
+                      className="text-foreground"
+                    />
+                  ) : (
+                    <IconCircle
+                      size={18}
+                      className="text-muted-foreground/40"
+                    />
+                  )}
+                  {r.label}
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
-      />
-      <Controller
-        name="email"
-        control={form.control}
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid || undefined}>
-            <FieldLabel>Email</FieldLabel>
-            <Input
-              {...field}
-              placeholder="you@example.com"
-              autoComplete="email"
-              inputMode="email"
-            />
-            <FieldError>{fieldState.error?.message}</FieldError>
-          </Field>
-        )}
-      />
-      <Controller
-        name="password"
-        control={form.control}
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid || undefined}>
-            <FieldLabel>Password</FieldLabel>
-            <Input
-              {...field}
-              type="password"
-              placeholder="At least 8 characters"
-              autoComplete="new-password"
-            />
-            <FieldError>{fieldState.error?.message}</FieldError>
-          </Field>
-        )}
-      />
+      </section>
 
       {serverError && <p className="text-sm text-destructive">{serverError}</p>}
 
-      <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
-        {isLoading ? "Creating account..." : "Continue"}
+      <Button
+        type="submit"
+        className="mt-auto w-full rounded-full text-base py-6 flex flex-row items-center"
+        size="lg"
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          "Creating account..."
+        ) : (
+          <>
+            Continue
+            <IconArrowRight stroke={2} />
+          </>
+        )}
       </Button>
     </form>
   );
