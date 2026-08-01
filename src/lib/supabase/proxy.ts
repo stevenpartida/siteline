@@ -42,7 +42,7 @@ export async function updateSession(request: NextRequest) {
 
   // 2. No user → redirect to landing
   if (!user) {
-    return NextResponse.redirect(new URL("/sign-in", request.url));
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   // 3. Has user + on auth route → redirect to projects
