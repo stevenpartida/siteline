@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import MobileNav from "@/components/mobile/mobile-nav";
 import CreateProjectSheet from "@/components/project/create-project-sheet";
 import ProjectPickerDrawer from "@/components/project/project-picker-drawer";
@@ -20,7 +20,9 @@ import {
 
 function AppLayoutInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { hidden } = useNavVisibility();
+  const isOnboarding = pathname?.startsWith("/onboarding") ?? false;
   const [sheetOpen, setSheetOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerProjects, setPickerProjects] = useState<
@@ -148,7 +150,7 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
         onSelect={handleProjectPicked}
         onCreateNew={handleCreateNew}
       />
-      {!hidden && (
+      {!hidden && !isOnboarding && (
         <MobileNav
           onAddProject={() => setSheetOpen(true)}
           onCameraCapture={handleCameraCapture}
