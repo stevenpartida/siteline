@@ -63,14 +63,14 @@ function SignUpForm({ token }: SignUpFormProps) {
         setIsLoading(false);
         return;
       }
-      router.push("/projects");
+      router.push("/onboarding/welcome");
       return;
     }
 
-    router.push("/onboarding");
+    router.push("/onboarding/company");
   }
 
-  const pwd = form.watch("password");
+  const pwd = form.watch("password") ?? "";
 
   const rules = [
     { label: "At least 8 characters", met: pwd.length >= 8 },
@@ -85,7 +85,7 @@ function SignUpForm({ token }: SignUpFormProps) {
       className="flex flex-1 flex-col space-y-4"
     >
       <section className="flex flex-col gap-4">
-        <div className="flex flex-row items-center justify-between gap-3">
+        <div className="flex flex-row items-start justify-between gap-3">
           <Controller
             name="first_name"
             control={form.control}
@@ -170,7 +170,7 @@ function SignUpForm({ token }: SignUpFormProps) {
                   {...field}
                   type="password"
                   placeholder="••••••••"
-                  autoComplete="current-password"
+                  autoComplete="new-password"
                 />
               </InputGroup>
               {fieldState.error && (
@@ -183,7 +183,7 @@ function SignUpForm({ token }: SignUpFormProps) {
           )}
         />
         {pwd.length > 0 && (
-          <div className="rounded-xl bg-white p-4">
+          <div className="rounded-xl bg-card p-4">
             <ul className="space-y-2 text-xs">
               {rules.map((r) => (
                 <li

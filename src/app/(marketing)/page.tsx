@@ -7,12 +7,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 async function LandingPage() {
-  // const cookieStore = await cookies();
-  // const supabase = await createClient(cookieStore);
-  // const {
-  //   data: { user },
-  // } = await supabase.auth.getUser();
-  // if (user) redirect("/projects");
+  const cookieStore = await cookies();
+  const supabase = await createClient(cookieStore);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) redirect("/projects");
 
   return (
     <main className="flex h-full flex-col items-center px-6 text-center">

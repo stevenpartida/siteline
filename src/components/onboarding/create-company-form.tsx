@@ -1,15 +1,26 @@
+"use client";
+
 import {
   type CreateCompanyFormValues,
   createCompanySchema,
 } from "@/lib/validators/company";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Button } from "../ui/button";
 import { Field, FieldError, FieldLabel } from "../ui/field";
-import { Input } from "../ui/input";
 import { createCompanyAction } from "@/actions/company";
+import {
+  IconBuilding,
+  IconAlertCircle,
+  IconShieldCheck,
+} from "@tabler/icons-react";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "../ui/input-group";
 
 function CreateCompanyForm() {
   const router = useRouter();
@@ -33,50 +44,65 @@ function CreateCompanyForm() {
       setIsLoading(false);
       return;
     }
-    console.log(values);
-    router.push("/projects");
+
+    router.push("/onboarding/welcome");
   }
   return (
-    <div className="flex-1 flex flex-col justify-center px-6 pt-safe pb-safe bg-background md:max-w-sm mx-auto w-full">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight">
-          Set up your company
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Enter your details to get started.
-        </p>
-      </div>
-
-      {/* Form */}
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+    <form
+      onSubmit={form.handleSubmit(onSubmit)}
+      className="flex flex-1 flex-col space-y-4"
+    >
+      <section className="flex flex-col gap-4">
         <Controller
           name="company_name"
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid || undefined}>
               <FieldLabel>Company Name</FieldLabel>
-              <Input
-                {...field}
-                placeholder="Ace Roofing"
-                autoComplete="off"
-                inputMode="text"
-              />
-              <FieldError>{fieldState.error?.message}</FieldError>
+              <InputGroup className="gap-1 items-center align-middle">
+                <InputGroupAddon>
+                  <IconBuilding className="size-4" />
+                </InputGroupAddon>
+                <InputGroupInput
+                  {...field}
+                  id="company_name"
+                  placeholder="Acme Construction"
+                  autoComplete="organization"
+                  inputMode="text"
+                />
+              </InputGroup>
+              {fieldState.error && (
+                <FieldError className="flex flex-row gap-1 items-center text-xs">
+                  <IconAlertCircle size={14} />
+                  {fieldState.error.message}
+                </FieldError>
+              )}
             </Field>
           )}
         />
+        <div className="flex flex-row items-start border border-border gap-2 rounded-xl bg-card p-4">
+          <IconShieldCheck stroke={2} size={16} />
+          <div className="flex flex-col gap-1 items-start">
+            <h1 className="text-xs font-semibold ">You&apos;ll be the owner</h1>
+            <p className="text-xs font-normal text-muted-foreground">
+              You can invite your crew with a link once you&apos;re in.
+            </p>
+          </div>
+        </div>
+      </section>
 
-        {/* Server error */}
-        {serverError && (
-          <p className="text-sm text-destructive">{serverError}</p>
-        )}
+      {/* Server error */}
+      {serverError && <p className="text-sm text-destructive">{serverError}</p>}
 
-        <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
-          {isLoading ? "Creating company..." : "Create"}
-        </Button>
-      </form>
-    </div>
+      <Button
+        type="submit"
+        className="mt-auto w-full rounded-full text-base py-6 flex flex-row items-center"
+        size="lg"
+        disabled={isLoading}
+      >
+        {isLoading ? "Creating company..." : "Create Company"}
+      </Button>
+    </form>
   );
 }
 
