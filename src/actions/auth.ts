@@ -16,9 +16,9 @@ export async function signUpAction(
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
-  // Parse raw data and return email and password from parsed data
   const rawData = {
-    full_name: formData.get("full_name"),
+    first_name: formData.get("first_name"),
+    last_name: formData.get("last_name"),
     email: formData.get("email"),
     password: formData.get("password"),
   };
@@ -28,21 +28,35 @@ export async function signUpAction(
     return { error: parseData.error.issues[0].message };
   }
 
-  const { email, password, full_name } = parseData.data;
+  const { email, password, first_name, last_name } = parseData.data;
 
-  // Create Supabase auth uesr
+  // Create Supabase auth user
   const { data, error: authError } = await supabase.auth.signUp({
     email,
     password,
   });
+
   if (authError) {
+    // Supabase returns "User already registered" when confirmation is off
+    if (authError.message.toLowerCase().includes("already registered")) {
+      return { error: "An account with this email already exists." };
+    }
     return { error: authError.message };
   }
+
   if (!data.user) {
     return { error: "Sign up failed. Please try again." };
   }
 
-  // Insert auth user into user table
+  // Enumeration-safe existing-email detection (when email confirmation is ON,
+  // Supabase returns a user with an empty identities array instead of an error)
+  if (data.user.identities && data.user.identities.length === 0) {
+    return { error: "An account with this email already exists." };
+  }
+
+  const full_name = `${first_name.trim()} ${last_name.trim()}`;
+
+  // Insert profile row into public.users
   const { error: dbError } = await supabase
     .from("users")
     .insert({ id: data.user.id, full_name });
