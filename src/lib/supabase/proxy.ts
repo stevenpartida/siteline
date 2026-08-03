@@ -25,7 +25,6 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // ✅ Use getClaims() not getSession() or getUser()
   const { data: claimsData } = await supabase.auth.getClaims();
   const user = claimsData?.claims;
 
@@ -50,20 +49,25 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(new URL("/projects", request.url));
   }
 
-  // 4. Has user + no company → redirect to onboarding
+  // 4. Has user + no company → redirect to onboarding/company
   const { data: userData } = await supabase
     .from("users")
     .select("company_id")
     .eq("id", user.sub)
     .single();
 
-  if (!userData?.company_id && path !== "/onboarding") {
-    return NextResponse.redirect(new URL("/onboarding", request.url));
-  }
-
-  // 5. Has user + has company + trying to hit onboarding → redirect to projects
-  if (userData?.company_id && path === "/onboarding") {
-    return NextResponse.redirect(new URL("/projects", request.url));
+  if (!userData?.company_id) {
+    // No company yet — only /onboarding/company is valid; everything
+    // else (including /onboarding/welcome) sends them back to create one.
+    if (path !== "/onboarding/company") {
+      return NextResponse.redirect(new URL("/onboarding/company", request.url));
+    }
+  } else {
+    // 5. Has company + hitting onboarding → bounce to projects,
+    // except the post-signup welcome screen which is a legitimate step.
+    if (path.startsWith("/onboarding") && path !== "/onboarding/welcome") {
+      return NextResponse.redirect(new URL("/projects", request.url));
+    }
   }
 
   // 6. Everything else → let through
