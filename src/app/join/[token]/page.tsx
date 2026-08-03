@@ -1,7 +1,7 @@
 import { getAuthUser } from "@/actions/auth";
 import { validateInviteAction } from "@/actions/invite";
 import SignUpForm from "@/components/auth/sign-up-form";
-import JoinCompanyButton from "@/components/company/join-button";
+import { redirect } from "next/navigation";
 
 type JoinProps = {
   params: Promise<{ token: string }>;
@@ -15,9 +15,10 @@ async function JoinPage({ params }: JoinProps) {
   }
 
   const user = await getAuthUser();
-
   if (user) {
-    return <JoinCompanyButton token={token} />;
+    // Invites are for new crew only. Existing accounts should sign out
+    // and re-open the link, or use the app they already have access to.
+    redirect("/projects");
   }
 
   return (
