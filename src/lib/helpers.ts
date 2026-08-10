@@ -21,6 +21,13 @@ export function formatDate(
   return formatter.format(date);
 }
 
+export function formatMonthYear(date: Date): string {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
 export function formatTime(date: Date): string {
   return date.toLocaleTimeString("en-US", {
     hour: "numeric",

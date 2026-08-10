@@ -1,9 +1,13 @@
+export type Role = "owner" | "project_manager" | "crew";
+
 export type User = {
   id: string;
   full_name: string | null;
   created_at: string;
-  company_id: string;
-  role: "owner" | "crew";
+  company_id: string | null;
+  role: Role;
+  gps_autofile: boolean;
+  phone: string | null;
 };
 
 export type Company = {
@@ -12,6 +16,7 @@ export type Company = {
   owner_id: string;
   created_at: string;
   updated_at: string;
+  license_number: string | null;
 };
 
 export type Photo = {
