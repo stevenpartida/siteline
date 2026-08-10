@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createCompanySchema } from "@/lib/validators/company";
 import { cookies } from "next/headers";
+import { getAuthUser } from "./auth";
 
 export async function createCompanyAction(
   formData: FormData,
@@ -54,56 +55,39 @@ export async function createCompanyAction(
   return { error: null };
 }
 
-export async function createInviteAction(): Promise<{
-  token: string | null;
-  error: string | null;
-}> {
+export async function createInviteAction(
+  role: "crew" | "project_manager",
+): Promise<{ error: string | null; token?: string }> {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
-  // Get authenticated user
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return { token: null, error: "Not authenticated " };
-  }
+  const user = await getAuthUser();
+  if (!user) return { error: "Not authenticated" };
 
-  // Get user's company_id and confirm owner role
-  const { data: userData, error: userError } = await supabase
+  // Only owners can create invites (matches your RLS: invites insert owner only)
+  const { data: userData } = await supabase
     .from("users")
     .select("company_id, role")
     .eq("id", user.id)
     .single();
 
-  if (!userData) {
-    return { token: null, error: "Failed to fetch user" };
-  }
-  if (userError || !userData.company_id) {
-    return { token: null, error: "No company found" };
-  }
+  if (!userData?.company_id) return { error: "No company found" };
+  if (userData.role !== "owner") return { error: "Only owners can invite" };
 
-  if (userData.role !== "owner") {
-    return { token: null, error: "Only owners can invite crew" };
-  }
+  const token = crypto.randomUUID(); // or a shorter nanoid if you prefer prettier links
+  const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000); // 48 hours
 
-  //Generate token and expiroy
-  const token = crypto.randomUUID();
-  const expires_at = new Date();
-  expires_at.setDate(expires_at.getDate() + 7);
-
-  // Insert invite row
-  const { error: inviteError } = await supabase.from("invites").insert({
+  const { error } = await supabase.from("invites").insert({
     company_id: userData.company_id,
+    sender_id: user.id,
+    role, // 'crew' or 'project_manager' from the toggle
     token,
     status: "pending",
-    expires_at: expires_at.toISOString(),
+    expires_at: expiresAt.toISOString(),
   });
-  if (inviteError) {
-    return { token: null, error: "Failed to create invite" };
-  }
 
-  return { token, error: null };
+  if (error) return { error: "Failed to create invite" };
+  return { error: null, token };
 }
 
 export async function revokeInviteAction(

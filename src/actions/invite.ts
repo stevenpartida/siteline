@@ -47,7 +47,7 @@ export async function joinCompanyAction(
 ): Promise<{ error: string | null }> {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
-  // Chech user auth
+
   const user = await getAuthUser();
   if (!user) {
     return { error: "Not Authenticated" };
@@ -63,34 +63,36 @@ export async function joinCompanyAction(
     return { error: "Already belongs to a company" };
   }
 
-  // Get invite from invites table by token
-  const { data } = await supabase
+  // Get invite — now also selecting role
+  const { data: invite } = await supabase
     .from("invites")
-    .select("company_id, status, expires_at")
+    .select("company_id, status, expires_at, role")
     .eq("token", token)
     .single();
 
-  if (!data) {
-    return { error: "Failed to get invite data" };
+  if (!invite) {
+    return { error: "Invalid invite link" };
   }
 
-  // Validate invite with status and expiry checks
-  if (data.status === "revoked") {
-    return { error: "Invite has been revoked" };
+  // Validate status: must be pending (not revoked, not already accepted)
+  if (invite.status !== "pending") {
+    return { error: "This invite is no longer valid" };
   }
 
-  if (new Date(data.expires_at) < new Date()) {
+  if (new Date(invite.expires_at) < new Date()) {
     return { error: "Invite has expired" };
   }
 
-  // Update user table with company_id and role
-  const { error } = await supabase
+  // Assign the role the invite specifies (project_manager or crew) — never owner
+  const role = invite.role === "project_manager" ? "project_manager" : "crew";
+
+  const { error: updateError } = await supabase
     .from("users")
-    .update({ company_id: data.company_id, role: "crew" })
+    .update({ company_id: invite.company_id, role })
     .eq("id", user.id);
 
-  if (error) {
-    return { error: "failed to update user" };
+  if (updateError) {
+    return { error: "Failed to join company" };
   }
 
   return { error: null };
