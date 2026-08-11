@@ -1,4 +1,4 @@
-import { formatMonthYear } from "@/lib/helpers";
+import { formatMonthYear, formatPhoneNumber } from "@/lib/helpers";
 import { Profile } from "@/types/account";
 import {
   IconCalendar,
@@ -11,8 +11,10 @@ import { Button } from "../ui/button";
 
 function ContactInfo({
   profile,
+  onEdit,
 }: {
   profile: Pick<Profile, "email" | "createdAt" | "phone">;
+  onEdit: () => void;
 }) {
   const memberSince = formatMonthYear(new Date(profile.createdAt));
 
@@ -29,13 +31,14 @@ function ContactInfo({
         <Row icon={<IconPhone className="size-4" />} label="Phone">
           {profile.phone ? (
             <span className="text-sm text-muted-foreground truncate">
-              {profile.phone}
+              {formatPhoneNumber(profile.phone)}
             </span>
           ) : (
             <Button
               variant="outline"
               size="xs"
               className="rounded-full bg-card border-dashed border-foreground/30 h-5 px-1.5 gap-1 text-[10px] [&_svg]:size-2.5"
+              onClick={onEdit}
             >
               <IconPlus />
               Add

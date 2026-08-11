@@ -4,7 +4,13 @@ import React from "react";
 import { Button } from "../ui/button";
 import { IconEdit } from "@tabler/icons-react";
 
-function AccountHeader({ profile }: { profile: Profile }) {
+function AccountHeader({
+  profile,
+  onEdit,
+}: {
+  profile: Profile;
+  onEdit: () => void;
+}) {
   return (
     <header className="flex flex-row items-center justify-between">
       <div className="flex flex-row items-center  gap-4">
@@ -20,7 +26,11 @@ function AccountHeader({ profile }: { profile: Profile }) {
           </div>
         </div>
       </div>
-      <Button variant="outline" className="rounded-full bg-card">
+      <Button
+        variant="outline"
+        className="rounded-full bg-card"
+        onClick={onEdit}
+      >
         <IconEdit stroke={2} />
         Edit
       </Button>
