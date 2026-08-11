@@ -5,7 +5,6 @@ import { AccountData } from "@/types/account";
 import { Company, User } from "@/types/db";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { da } from "zod/locales";
 
 async function AccountPage() {
   const cookieStore = await cookies();
@@ -14,7 +13,7 @@ async function AccountPage() {
   const user = await getAuthUser();
   if (!user) redirect("/");
 
-  // Featch profile details
+  // Fetch profile details
   const { data: userInfo, error } = await supabase
     .from("users")
     .select("full_name, role, created_at, gps_autofile, company_id, phone")
@@ -43,7 +42,7 @@ async function AccountPage() {
 
   if (!companyInfo) redirect("/onboarding/company");
 
-  // Fetch count data for memebers and projects belonging to one company
+  // Fetch count data for members and projects belonging to one company
   const [{ count: memebers }, { count: projects }] = await Promise.all([
     supabase
       .from("users")

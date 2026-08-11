@@ -17,8 +17,6 @@ export async function createCompanyAction(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
-  console.log("user id:", user.id);
-
   // Parse raw data
   const rawData = {
     company_name: formData.get("company_name"),
