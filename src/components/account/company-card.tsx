@@ -10,13 +10,13 @@ import {
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
-import { ButtonGroup } from "../ui/button-group";
 
 type CompanyCardProps = {
   company: Company;
   role: Role;
   memberCount: number;
   projectCount: number;
+  onEdit: () => void;
 };
 
 const ROLE_LABELS: Record<Role, string> = {
@@ -30,7 +30,9 @@ function CompanyCard({
   role,
   memberCount,
   projectCount,
+  onEdit,
 }: CompanyCardProps) {
+  const canEdit = role === "owner";
   return (
     <main className="flex flex-col bg-card border border-muted-foreground/20 rounded-3xl p-4 mt-8">
       <div className="flex flex-row items-start justify-between gap-3 ">
@@ -57,6 +59,8 @@ function CompanyCard({
                 variant="outline"
                 size="xs"
                 className="rounded-full bg-card border-dashed border-foreground/30 mt-1 h-5 px-1.5 gap-1 text-[10px] [&_svg]:size-2.5"
+                onClick={onEdit}
+                disabled={!canEdit}
               >
                 <IconPlus />
                 Add license number
@@ -65,13 +69,17 @@ function CompanyCard({
           </div>
         </div>
 
-        <Button
-          variant="secondary"
-          size="icon"
-          className="rounded-full shrink-0"
-        >
-          <IconEdit className="size-4" />
-        </Button>
+        {canEdit && (
+          <Button
+            variant="secondary"
+            size="icon"
+            className="rounded-full shrink-0"
+            onClick={onEdit}
+            aria-label="Edit company"
+          >
+            <IconEdit className="size-4" />
+          </Button>
+        )}
       </div>
       <Separator className="my-4" />
       <div className="flex flex-row items-stretch">
