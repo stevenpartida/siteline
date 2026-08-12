@@ -1,9 +1,13 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { createCompanySchema } from "@/lib/validators/company";
+import {
+  createCompanySchema,
+  editCompanySchema,
+} from "@/lib/validators/company";
 import { cookies } from "next/headers";
 import { getAuthUser } from "./auth";
+import { revalidatePath } from "next/cache";
 
 export async function createCompanyAction(
   formData: FormData,
@@ -127,5 +131,44 @@ export async function revokeInviteAction(
     return { error: "Failed to revoke invite" };
   }
 
+  return { error: null };
+}
+
+export async function editCompanyAction(
+  formData: FormData,
+): Promise<{ error: string | null }> {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+
+  const user = await getAuthUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { data: userData, error: userDataError } = await supabase
+    .from("users")
+    .select("company_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (userDataError || !userData) return { error: "Failed to fetch user info" };
+  if (!userData.company_id) return { error: "No company found" };
+  if (userData.role !== "owner")
+    return { error: "Only owners can edit company" };
+
+  const parsed = editCompanySchema.safeParse({
+    company_name: formData.get("company_name"),
+    license_number: formData.get("license_number"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const { company_name, license_number } = parsed.data;
+
+  const { error: companyError } = await supabase
+    .from("companies")
+    .update({ name: company_name, license_number: license_number || null })
+    .eq("id", userData.company_id);
+
+  if (companyError) return { error: "Failed to update company" };
+
+  revalidatePath("/account");
   return { error: null };
 }
