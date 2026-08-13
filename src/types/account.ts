@@ -17,7 +17,14 @@ export type AccountData = {
     members: number;
     projects: number;
   };
+  team: Array<{
+    id: string;
+    fullName: string;
+    role: Role;
+  }>;
 };
 
 export type Profile = AccountData["profile"];
 export type Company = AccountData["company"];
+export type Team = AccountData["team"];
+export type TeamMember = AccountData["team"][number];

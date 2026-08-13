@@ -42,17 +42,23 @@ async function AccountPage() {
 
   if (!companyInfo) redirect("/onboarding/company");
 
-  // Fetch count data for members and projects belonging to one company
-  const [{ count: memebers }, { count: projects }] = await Promise.all([
+  // Fetch team members and project count for this company in parallel
+  const [{ data: teamRows }, { count: projectCount }] = await Promise.all([
     supabase
       .from("users")
-      .select("*", { count: "exact", head: true })
+      .select("id, full_name, role")
       .eq("company_id", userInfo.company_id),
     supabase
       .from("projects")
       .select("*", { count: "exact", head: true })
       .eq("company_id", userInfo.company_id),
   ]);
+
+  const team = (teamRows ?? []).map((member) => ({
+    id: member.id,
+    fullName: member.full_name ?? "",
+    role: member.role,
+  }));
 
   const data: AccountData = {
     profile: {
@@ -68,9 +74,10 @@ async function AccountPage() {
       license_number: companyInfo.license_number,
     },
     counts: {
-      members: memebers ?? 0,
-      projects: projects ?? 0,
+      members: team.length,
+      projects: projectCount ?? 0,
     },
+    team,
   };
 
   return (
