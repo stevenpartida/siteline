@@ -137,6 +137,36 @@ export async function getOrCreateInviteAction(
   return await createInviteAction(role);
 }
 
+export async function resetInviteAction(
+  role: "crew" | "project_manager",
+): Promise<{ error: string | null; token?: string; expiresAt?: string }> {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+
+  const user = await getAuthUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { data: userData } = await supabase
+    .from("users")
+    .select("company_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (!userData?.company_id) return { error: "No company found" };
+  if (userData.role !== "owner") return { error: "Only owners can invite" };
+
+  const { error: revokeError } = await supabase
+    .from("invites")
+    .update({ status: "revoked" })
+    .eq("company_id", userData.company_id)
+    .eq("role", role)
+    .eq("status", "pending");
+
+  if (revokeError) return { error: "Failed to revoke current invite" };
+
+  return await createInviteAction(role);
+}
+
 export async function revokeInviteAction(
   token: string,
 ): Promise<{ error: string | null }> {
