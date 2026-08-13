@@ -59,14 +59,17 @@ export async function createCompanyAction(
 
 export async function createInviteAction(
   role: "crew" | "project_manager",
-): Promise<{ error: string | null; token?: string }> {
+): Promise<{
+  error: string | null;
+  token?: string;
+  expiresAt?: string;
+}> {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
   const user = await getAuthUser();
   if (!user) return { error: "Not authenticated" };
 
-  // Only owners can create invites (matches your RLS: invites insert owner only)
   const { data: userData } = await supabase
     .from("users")
     .select("company_id, role")
@@ -76,20 +79,62 @@ export async function createInviteAction(
   if (!userData?.company_id) return { error: "No company found" };
   if (userData.role !== "owner") return { error: "Only owners can invite" };
 
-  const token = crypto.randomUUID(); // or a shorter nanoid if you prefer prettier links
-  const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000); // 48 hours
+  const token = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
   const { error } = await supabase.from("invites").insert({
     company_id: userData.company_id,
     sender_id: user.id,
-    role, // 'crew' or 'project_manager' from the toggle
+    role,
     token,
     status: "pending",
     expires_at: expiresAt.toISOString(),
   });
 
   if (error) return { error: "Failed to create invite" };
-  return { error: null, token };
+  return { error: null, token, expiresAt: expiresAt.toISOString() };
+}
+
+export async function getOrCreateInviteAction(
+  role: "crew" | "project_manager",
+): Promise<{ error: string | null; token?: string; expiresAt?: string }> {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+
+  const user = await getAuthUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { data: userData } = await supabase
+    .from("users")
+    .select("company_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (!userData?.company_id) return { error: "No company found" };
+  if (userData.role !== "owner") return { error: "Only owners can invite" };
+
+  const { data: existing, error: lookupError } = await supabase
+    .from("invites")
+    .select("token, expires_at")
+    .eq("company_id", userData.company_id)
+    .eq("role", role)
+    .eq("status", "pending")
+    .gt("expires_at", new Date().toISOString())
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (lookupError) return { error: "Failed to check for existing invite" };
+
+  if (existing) {
+    return {
+      error: null,
+      token: existing.token,
+      expiresAt: existing.expires_at,
+    };
+  }
+
+  return await createInviteAction(role);
 }
 
 export async function revokeInviteAction(
