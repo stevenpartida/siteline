@@ -7,17 +7,21 @@ import CompanyCard from "./company-card";
 import ContactInfo from "./contact-info";
 import EditAccountDrawer from "./edit-account-drawer";
 import EditCompanyDrawer from "./edit-company-drawer";
+import InviteDrawer from "./invite-drawer";
+import SignOutButton from "../auth/sign-out-button";
 
 function AccountShell({ data }: { data: AccountData }) {
-  const { profile, company, counts } = data;
+  const { profile, company, counts, team } = data;
   const [editAccountOpen, setEditAccountOpen] = useState(false);
   const [editCompanyOpen, setEditCompanyOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   const openEditAccount = () => setEditAccountOpen(true);
   const openEditCompany = () => setEditCompanyOpen(true);
+  const openInvite = () => setInviteOpen(true);
 
   return (
-    <main className="px-4">
+    <main className="px-4 pb-32 h-dvh overflow-y-auto">
       <h1 className="text-3xl font-bold tracking-tight py-6">Account</h1>
       <div>
         <AccountHeader profile={profile} onEdit={openEditAccount} />
@@ -29,10 +33,14 @@ function AccountShell({ data }: { data: AccountData }) {
           memberCount={counts.members}
           projectCount={counts.projects}
           onEdit={openEditCompany}
+          onInvite={openInvite}
         />
       </div>
       <div>
         <ContactInfo profile={profile} onEdit={openEditAccount} />
+      </div>
+      <div>
+        <SignOutButton />
       </div>
 
       <EditAccountDrawer
@@ -45,6 +53,12 @@ function AccountShell({ data }: { data: AccountData }) {
         open={editCompanyOpen}
         onOpenChange={setEditCompanyOpen}
         company={company}
+      />
+      <InviteDrawer
+        open={inviteOpen}
+        onOpenChange={setInviteOpen}
+        companyName={company.name}
+        team={team}
       />
     </main>
   );

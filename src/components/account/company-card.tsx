@@ -17,6 +17,7 @@ type CompanyCardProps = {
   memberCount: number;
   projectCount: number;
   onEdit: () => void;
+  onInvite: () => void;
 };
 
 const ROLE_LABELS: Record<Role, string> = {
@@ -31,17 +32,18 @@ function CompanyCard({
   memberCount,
   projectCount,
   onEdit,
+  onInvite,
 }: CompanyCardProps) {
   const canEdit = role === "owner";
   return (
     <main className="flex flex-col bg-card border border-muted-foreground/20 rounded-3xl p-4 mt-8">
       <div className="flex flex-row items-start justify-between gap-3 ">
-        <div className="flex flex-row items-center gap-3 min-w-0">
+        <div className="flex flex-1 flex-row items-center gap-3 min-w-0">
           <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-foreground text-background">
             <IconBuilding className="size-6" />
           </div>
-          <div className="flex flex-col items-start justify-center min-w-0">
-            <div className="flex items-center gap-2 min-w-0">
+          <div className="flex w-0 flex-1 flex-col items-start justify-center overflow-hidden">
+            <div className="flex w-full items-center gap-2 min-w-0">
               <p className="text-base tracking-tight font-bold truncate capitalize">
                 {company.name}
               </p>
@@ -100,6 +102,8 @@ function CompanyCard({
       <Button
         className="w-full rounded-full text-base py-6 mt-6 font-semibold tracking-tight gap-2"
         size="lg"
+        onClick={onInvite}
+        disabled={!canEdit}
       >
         <IconUserPlus stroke={2} className="size-5" data-icon="inline-start" />
         Invite Teammates

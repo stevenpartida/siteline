@@ -91,7 +91,10 @@ export async function createInviteAction(
     expires_at: expiresAt.toISOString(),
   });
 
-  if (error) return { error: "Failed to create invite" };
+  if (error) {
+    console.error("createInviteAction insert failed:", error);
+    return { error: "Failed to create invite" };
+  }
   return { error: null, token, expiresAt: expiresAt.toISOString() };
 }
 

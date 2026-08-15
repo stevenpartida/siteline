@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { getAuthUser } from "./auth";
 
 export async function validateInviteAction(token: string): Promise<{
@@ -95,5 +96,6 @@ export async function joinCompanyAction(
     return { error: "Failed to join company" };
   }
 
+  revalidatePath("/account");
   return { error: null };
 }
