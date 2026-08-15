@@ -102,12 +102,12 @@ export async function signInAction(
   return { error: null };
 }
 
-export async function SignOutAction() {
+export async function signOutAction() {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
-  await supabase.auth.signOut();
-  revalidatePath("/");
+  await supabase.auth.signOut({ scope: "local" });
+  revalidatePath("/", "layout");
   redirect("/");
 }
 
