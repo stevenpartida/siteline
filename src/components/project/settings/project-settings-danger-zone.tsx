@@ -49,7 +49,8 @@ function ProjectSettingsDangerZone({ id }: ProjectSettingsDangerZoneProps) {
       >
         <AlertDialogTrigger asChild>
           <Button
-            className="w-full py-5 rounded-full"
+            className="w-full rounded-full text-base py-6 mt-6"
+            size="lg"
             variant="destructive"
             onClick={() => setOpen(true)}
           >

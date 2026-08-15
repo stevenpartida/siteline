@@ -103,9 +103,12 @@ function CreateProjectForm({ isOpen, onComplete }: CreateProjectFormProps) {
               data-invalid={fieldState.invalid || undefined}
               className="mb-4"
             >
+              <FieldLabel className="text-foreground text-sm">
+                Project Name
+              </FieldLabel>
               <Input
                 {...field}
-                placeholder="Project Name"
+                placeholder="Maple Street Remodel"
                 autoComplete="off"
                 inputMode="text"
               />
@@ -129,7 +132,7 @@ function CreateProjectForm({ isOpen, onComplete }: CreateProjectFormProps) {
               <Field data-invalid={fieldState.invalid || undefined}>
                 <Input
                   {...field}
-                  placeholder="Address Line 1"
+                  placeholder="Street address"
                   autoComplete="off"
                   inputMode="text"
                 />
@@ -144,7 +147,7 @@ function CreateProjectForm({ isOpen, onComplete }: CreateProjectFormProps) {
               <Field data-invalid={fieldState.invalid || undefined}>
                 <Input
                   {...field}
-                  placeholder="Address Line 2"
+                  placeholder="Apt, suite, unit (optional)"
                   autoComplete="off"
                   inputMode="text"
                 />
@@ -218,7 +221,8 @@ function CreateProjectForm({ isOpen, onComplete }: CreateProjectFormProps) {
         <Button
           type="submit"
           disabled={isLoading}
-          className="mt-12 w-full h-12 rounded-xl"
+          className="w-full rounded-full text-base py-6 mt-8"
+          size="lg"
         >
           {isLoading ? (
             <>

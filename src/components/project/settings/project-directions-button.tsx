@@ -16,8 +16,8 @@ function ProjectDirectionButton({ address }: ProjectDirectionButtonProps) {
         rel="noopener noreferrer"
         className="w-full"
       >
-        <Button className="w-full py-5 rounded-full">
-          <IconLocationPin stroke={2} />
+        <Button className="w-full rounded-full text-base py-6 mt-6" size="lg">
+          <IconLocationPin stroke={2} data-icon="inline-start" />
           <span className="text-sm font-semibold">Get Directions</span>
         </Button>
       </a>
