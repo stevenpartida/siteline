@@ -36,7 +36,7 @@ export default function RootLayout({
     <html lang="en" className={geist.className}>
       <body className="bg-background text-foreground antialiased">
         {children}
-        <Toaster />
+        <Toaster position="top-center" />
       </body>
     </html>
   );
