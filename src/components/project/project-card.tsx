@@ -21,6 +21,7 @@ type ProjectCardProps = {
   projectLat: number | null;
   projectLng: number | null;
   userCoords: Coordinates | null;
+  priority?: boolean;
 };
 
 export function ProjectCard({
@@ -32,6 +33,7 @@ export function ProjectCard({
   projectLat,
   projectLng,
   userCoords,
+  priority = false,
 }: ProjectCardProps) {
   const [starred, setStarred] = useState(isStarred);
   const [isPending, setIsPending] = useState(false);
@@ -69,6 +71,8 @@ export function ProjectCard({
           fill
           sizes="100vw"
           className="object-cover"
+          loading="eager"
+          priority={priority}
         />
       ) : (
         <div className="absolute inset-0 bg-muted flex items-center justify-center">

@@ -37,7 +37,7 @@ function ProjectsList({
 
   return (
     <div className="flex flex-col gap-4">
-      {projects.map((project) => (
+      {projects.map((project, i) => (
         <ProjectCard
           key={project.id}
           id={project.id}
@@ -48,6 +48,7 @@ function ProjectsList({
           projectLat={project.project_lat}
           projectLng={project.project_lng}
           userCoords={userCoords}
+          priority={i === 0}
         />
       ))}
     </div>
