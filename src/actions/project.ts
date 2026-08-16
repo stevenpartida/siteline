@@ -3,8 +3,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import { getAuthUser } from "./auth";
-import { createProjectSchema } from "@/lib/validators/project";
+import {
+  createProjectSchema,
+  editProjectSchema,
+} from "@/lib/validators/project";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { forwardGeocodeAddress } from "./location";
 
 export async function createProjectAction(
@@ -75,6 +79,63 @@ export async function createProjectAction(
   }
 
   return { error: null, projectId: project.id };
+}
+
+export async function editProjectAction(
+  id: string,
+  formData: FormData,
+): Promise<{ error: string | null }> {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+
+  const user = await getAuthUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { data: userData, error: userDataError } = await supabase
+    .from("users")
+    .select("company_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (userDataError || !userData) return { error: "Failed to fetch user info" };
+  if (!userData.company_id) return { error: "No company found" };
+  if (userData.role !== "owner" && userData.role !== "project_manager")
+    return { error: "Only owners and project managers can edit this project" };
+
+  const parsed = editProjectSchema.safeParse({
+    project_name: formData.get("project_name") ?? "",
+    address_line_1: formData.get("address_line_1") ?? "",
+    address_line_2: formData.get("address_line_2") ?? "",
+    city: formData.get("city") ?? "",
+    state: formData.get("state") ?? "",
+    zip_code: formData.get("zip_code") ?? "",
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const { address_line_1, address_line_2, city, state, zip_code } = parsed.data;
+  const projectName = parsed.data.project_name || address_line_1;
+  const address = `${address_line_1}${address_line_2 ? `, ${address_line_2}` : ""}, ${city}, ${state} ${zip_code}`;
+
+  const geocoded = await forwardGeocodeAddress(address);
+  const location = geocoded ? `POINT(${geocoded.lng} ${geocoded.lat})` : null;
+
+  const { error: projectError } = await supabase
+    .from("projects")
+    .update({
+      name: projectName,
+      address,
+      ...(location ? { location } : {}),
+    })
+    .eq("id", id)
+    .eq("company_id", userData.company_id);
+
+  if (projectError) return { error: "Failed to update project" };
+
+  revalidatePath(`/projects/${id}`);
+  revalidatePath(`/projects/${id}/settings`);
+  revalidatePath("/projects");
+
+  return { error: null };
 }
 
 export async function deleteProjectAction(

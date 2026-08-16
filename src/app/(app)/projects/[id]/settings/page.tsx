@@ -56,6 +56,8 @@ async function ProjectSettingsPage({ params }: ProjectSettingsProps) {
       <div>
         <ProjectSettingsActions
           id={projectSettings.id}
+          name={projectSettings.name}
+          address={projectSettings.address}
           isStarred={projectSettings.is_starred}
         />
       </div>

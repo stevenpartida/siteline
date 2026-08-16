@@ -8,18 +8,24 @@ import {
   IconShare2,
 } from "@tabler/icons-react";
 import { toggleProjectStarredAction } from "@/actions/projects";
+import EditProjectDrawer from "../edit-project-drawer";
 
 type ProjectSettingsActionsProps = {
   id: string;
+  name: string;
+  address: string;
   isStarred: boolean;
 };
 
 function ProjectSettingsActions({
   id,
+  name,
+  address,
   isStarred,
 }: ProjectSettingsActionsProps) {
   const [starred, setStarred] = useState(isStarred);
   const [isPending, setIsPending] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   async function handleStarClick() {
     const flip = !starred;
@@ -38,7 +44,10 @@ function ProjectSettingsActions({
     <div className="flex flex-row items-center justify-center gap-6 p-4">
       {/* Edit */}
       <div className="flex flex-col items-center gap-1.5">
-        <button className="flex items-center justify-center size-11 rounded-xl border border-border bg-card">
+        <button
+          onClick={() => setIsEditOpen(true)}
+          className="flex items-center justify-center size-11 rounded-xl border border-border bg-card"
+        >
           <IconEdit stroke={1.5} size={20} />
         </button>
         <span className="text-xs font-medium text-foreground">Edit</span>
@@ -69,6 +78,14 @@ function ProjectSettingsActions({
         </button>
         <span className="text-xs font-medium text-foreground">Share</span>
       </div>
+
+      <EditProjectDrawer
+        open={isEditOpen}
+        onOpenChange={setIsEditOpen}
+        projectId={id}
+        name={name}
+        address={address}
+      />
     </div>
   );
 }
