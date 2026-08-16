@@ -169,6 +169,24 @@ export function searchProject<T extends Project>(
   );
 }
 
+export async function downloadFilesToDevice(
+  files: { url: string; name: string }[],
+): Promise<void> {
+  for (const file of files) {
+    const res = await fetch(file.url);
+    if (!res.ok) continue;
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = objectUrl;
+    anchor.download = file.name;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
 export function getCurrentPosition(): Promise<Coordinates> {
   return Promise.race([
     new Promise<Coordinates>((resolve, reject) => {

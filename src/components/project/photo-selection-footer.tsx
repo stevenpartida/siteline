@@ -18,20 +18,48 @@ import {
   DrawerTitle,
 } from "../ui/drawer";
 import { cn } from "@/lib/utils";
+import { Spinner } from "../ui/spinner";
 
 type PhotoSelectionFooterProps = {
   selectedCount: number;
   onCancel: () => void;
   onShareClick: () => void;
+  onDownload: () => Promise<void>;
+  onDelete: () => Promise<void>;
 };
 
 function PhotoSelectionFooter({
   selectedCount,
   onCancel,
   onShareClick,
+  onDownload,
+  onDelete,
 }: PhotoSelectionFooterProps) {
   const [moreDrawerOpen, setMoreDrawerOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const hasSelection = selectedCount > 0;
+  const isBusy = isDownloading || isDeleting;
+
+  async function handleDownload() {
+    setIsDownloading(true);
+    try {
+      await onDownload();
+      setMoreDrawerOpen(false);
+    } finally {
+      setIsDownloading(false);
+    }
+  }
+
+  async function handleDelete() {
+    setIsDeleting(true);
+    try {
+      await onDelete();
+      setMoreDrawerOpen(false);
+    } finally {
+      setIsDeleting(false);
+    }
+  }
 
   return (
     <>
@@ -94,15 +122,17 @@ function PhotoSelectionFooter({
           </DrawerHeader>
           <div className="flex flex-col gap-2 px-4 pb-6">
             <button
-              className="flex items-center justify-between gap-3 rounded-2xl px-3 py-3 text-left hover:bg-muted bg-white border border-border"
-              onClick={() => {
-                // download handler — batch download lands next week
-                setMoreDrawerOpen(false);
-              }}
+              disabled={isBusy}
+              className="flex items-center justify-between gap-3 rounded-2xl px-3 py-3 text-left hover:bg-muted bg-white border border-border disabled:opacity-60"
+              onClick={handleDownload}
             >
               <div className="flex flex-row items-center gap-4">
                 <div className="h-12 w-12 bg-[#2F6FEB]/10 flex items-center justify-center rounded-lg text-[#2563eb]">
-                  <IconDownload size={20} stroke={2} />
+                  {isDownloading ? (
+                    <Spinner className="size-5" />
+                  ) : (
+                    <IconDownload size={20} stroke={2} />
+                  )}
                 </div>
                 <div className="flex flex-col">
                   <span className="font-semibold text-sm">
@@ -118,15 +148,17 @@ function PhotoSelectionFooter({
               </div>
             </button>
             <button
-              className="flex items-center justify-between gap-3 rounded-2xl px-3 py-3 text-left hover:bg-muted bg-white border border-border"
-              onClick={() => {
-                // delete handler — batch delete lands next week
-                setMoreDrawerOpen(false);
-              }}
+              disabled={isBusy}
+              className="flex items-center justify-between gap-3 rounded-2xl px-3 py-3 text-left hover:bg-muted bg-white border border-border disabled:opacity-60"
+              onClick={handleDelete}
             >
               <div className="flex flex-row items-center gap-4">
                 <div className="h-12 w-12 bg-[#2F6FEB]/10 flex items-center justify-center rounded-lg text-[#2563eb]">
-                  <IconTrash size={20} stroke={2} />
+                  {isDeleting ? (
+                    <Spinner className="size-5" />
+                  ) : (
+                    <IconTrash size={20} stroke={2} />
+                  )}
                 </div>
                 <div className="flex flex-col">
                   <span className="font-semibold text-sm">Delete</span>

@@ -2,6 +2,7 @@
 
 import { Document, Photo } from "@/types/db";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 import EmptyState from "@/components/project/empty-state";
@@ -18,6 +19,12 @@ import PhotoGrid from "./photo-grid";
 import DocumentList from "./document-list";
 import PhotoSelectionFooter from "./photo-selection-footer";
 import DocumentSelectionFooter from "./document-selection-footer";
+import {
+  deleteMediaAction,
+  getMediaDownloadsAction,
+} from "@/actions/media";
+import { downloadFilesToDevice } from "@/lib/helpers";
+import { toast } from "sonner";
 
 type ProjectTabsProps = {
   projectId: string;
@@ -46,8 +53,44 @@ function ProjectTabs({
 }: ProjectTabsProps) {
   const [activeTab, setActiveTab] = useState<"photos" | "documents">("photos");
   const [addDrawerOpen, setAddDrawerOpen] = useState(false);
+  const router = useRouter();
 
   const activeItems = activeTab === "photos" ? photos : documents;
+  const activeBucket = activeTab === "photos" ? "photos" : "documents";
+
+  const handleDownloadSelected = async () => {
+    if (selectedIds.size === 0) return;
+    const ids = Array.from(selectedIds);
+    const result = await getMediaDownloadsAction(activeBucket, ids, projectId);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    try {
+      await downloadFilesToDevice(result.files);
+      toast.success(
+        `Downloaded ${result.files.length} ${activeBucket === "photos" ? "photo" : "document"}${result.files.length === 1 ? "" : "s"}`,
+      );
+    } catch {
+      toast.error("Some files failed to download");
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedIds.size === 0) return;
+    const ids = Array.from(selectedIds);
+    const count = ids.length;
+    const result = await deleteMediaAction(activeBucket, ids, projectId);
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    onExitSelection();
+    router.refresh();
+    toast.success(
+      `Deleted ${count} ${activeBucket === "photos" ? "photo" : "document"}${count === 1 ? "" : "s"}`,
+    );
+  };
 
   const allSelected =
     (activeItems?.length ?? 0) > 0 &&
@@ -196,11 +239,15 @@ function ProjectTabs({
             selectedCount={selectedIds.size}
             onCancel={onExitSelection}
             onShareClick={onShareClick}
+            onDownload={handleDownloadSelected}
+            onDelete={handleDeleteSelected}
           />
         ) : (
           <DocumentSelectionFooter
             selectedCount={selectedIds.size}
             onCancel={onExitSelection}
+            onDownload={handleDownloadSelected}
+            onDelete={handleDeleteSelected}
           />
         ))}
       <AddMediaDrawer
