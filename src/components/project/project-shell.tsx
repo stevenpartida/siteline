@@ -7,6 +7,7 @@ import ProjectTabs from "@/components/project/project-tabs";
 import { useNavVisibility } from "@/lib/nav-visibility-context";
 import ShareDrawer from "./share-drawer";
 import { generateShareLink } from "@/actions/share";
+import { toast } from "sonner";
 
 type ProjectShellProps = {
   projectId: string;
@@ -87,14 +88,20 @@ function ProjectShell({
       const result = await generateShareLink(projectId, photoIds, type);
 
       if (!result.ok) {
-        console.error("Share link failed:", result.error);
-        alert(`Share failed: ${result.error}`);
+        toast.error(`Share failed: ${result.error}`);
         return;
       }
 
       const url = `${window.location.origin}/share/${result.token}`;
-      console.log("Share URL:", url);
-      alert(url); // temporary — copy into an incognito tab to test
+
+      try {
+        await navigator.clipboard.writeText(url);
+        toast.success("Share link copied to clipboard");
+      } catch {
+        toast.error("Couldn't copy link — long-press to copy", {
+          description: url,
+        });
+      }
 
       setSelectionMode(false);
       setSelectedIds(new Set());
