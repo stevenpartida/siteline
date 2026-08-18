@@ -7,7 +7,11 @@ const nextConfig: NextConfig = {
   ],
   experimental: {
     serverActions: {
-      bodySizeLimit: "12mb",
+      // Vercel caps a serverless function's request body at 4.5 MB, and Server
+      // Actions ride that request — anything higher here is not honored in
+      // production. Files are guarded client-side at MAX_UPLOAD_BYTES (4 MB),
+      // leaving headroom for the multipart envelope.
+      bodySizeLimit: "4.5mb",
     },
   },
   images: {

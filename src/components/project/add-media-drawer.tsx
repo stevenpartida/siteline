@@ -1,3 +1,5 @@
+"use client";
+
 import { uploadMediaAction } from "@/actions/upload";
 import {
   Drawer,
@@ -5,8 +7,9 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import { getCurrentPosition } from "@/lib/helpers";
+import { checkUploadSize, getCurrentPosition } from "@/lib/helpers";
 import { Coordinates } from "@/types/location";
+import { toast } from "sonner";
 
 import {
   IconUpload,
@@ -16,7 +19,7 @@ import {
 } from "@tabler/icons-react";
 
 import { useRouter } from "next/navigation";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 type AddMediaDrawerProps = {
   projectId: string;
@@ -33,6 +36,7 @@ function AddMediaDrawer({
 }: AddMediaDrawerProps) {
   const photoInputRef = useRef<HTMLInputElement>(null);
   const documentInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const router = useRouter();
 
@@ -40,24 +44,28 @@ function AddMediaDrawer({
     (bucket: "photos" | "documents") =>
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
-      if (!file) return;
+      // Clear the input so re-picking the same file still fires onChange.
+      e.target.value = "";
+      if (!file || isUploading) return;
+
+      const label = bucket === "photos" ? "Photo" : "Document";
+
+      const sizeError = checkUploadSize(file);
+      if (sizeError) {
+        toast.error(`${label} is too large`, { description: sizeError });
+        return;
+      }
+
+      setIsUploading(true);
+      const toastId = toast.loading(`Uploading ${label.toLowerCase()}…`);
 
       let location: Coordinates | null = null;
 
       if (bucket === "photos") {
         try {
           location = await getCurrentPosition();
-        } catch (err) {
-          if (err instanceof GeolocationPositionError) {
-            console.error(
-              "Geolocation failed — code:",
-              err.code,
-              "message:",
-              err.message,
-            );
-          } else {
-            console.error("Geolocation failed:", err);
-          }
+        } catch {
+          // Permission denied, timeout, or unsupported — upload without GPS.
           location = null;
         }
       }
@@ -69,11 +77,17 @@ function AddMediaDrawer({
         location,
       );
 
+      setIsUploading(false);
+
       if (error) {
-        console.error(error);
+        toast.error(`${label} upload failed`, {
+          id: toastId,
+          description: error,
+        });
         return;
       }
 
+      toast.success(`${label} added`, { id: toastId });
       onOpenChange(false);
       router.refresh();
     };
@@ -89,12 +103,16 @@ function AddMediaDrawer({
         <DrawerHeader className="flex-1 align-middle">
           <DrawerTitle className="text-sm font-medium text-foreground"></DrawerTitle>
         </DrawerHeader>
-        <div className="w-full px-4 pb-12 flex flex-col gap-2">
+        <div
+          className="w-full px-4 pb-12 flex flex-col gap-2 aria-busy:opacity-60"
+          aria-busy={isUploading}
+        >
           {activeTab === "photos" ? (
             <>
               <button
                 onClick={() => photoInputRef.current?.click()}
-                className="flex flex-row border bg-white items-center gap-4 w-full rounded-2xl"
+                disabled={isUploading}
+                className="flex flex-row border bg-white items-center gap-4 w-full rounded-2xl disabled:pointer-events-none"
               >
                 <div className="p-4 flex items-center justify-center">
                   <IconUpload
@@ -112,6 +130,7 @@ function AddMediaDrawer({
                 type="file"
                 accept="image/*"
                 className="hidden"
+                disabled={isUploading}
                 onChange={handleFileChange("photos")}
               />
 
@@ -131,6 +150,7 @@ function AddMediaDrawer({
                   accept="image/*"
                   capture="environment"
                   className="hidden"
+                  disabled={isUploading}
                   onChange={handleFileChange("photos")}
                 />
               </label>
@@ -139,7 +159,8 @@ function AddMediaDrawer({
             <>
               <button
                 onClick={() => documentInputRef.current?.click()}
-                className="flex flex-row border bg-white items-center gap-4 w-full rounded-2xl"
+                disabled={isUploading}
+                className="flex flex-row border bg-white items-center gap-4 w-full rounded-2xl disabled:pointer-events-none"
               >
                 <div className="p-4 flex items-center justify-center">
                   <IconPaperclip
@@ -157,6 +178,7 @@ function AddMediaDrawer({
                 type="file"
                 accept=".pdf,image/*,.doc,.docx,.xls,.xlsx"
                 className="hidden"
+                disabled={isUploading}
                 onChange={handleFileChange("documents")}
               />
               <label className="flex flex-row border bg-white items-center gap-4 w-full rounded-2xl cursor-pointer">
@@ -175,6 +197,7 @@ function AddMediaDrawer({
                   accept="image/*"
                   capture="environment"
                   className="hidden"
+                  disabled={isUploading}
                   onChange={handleFileChange("documents")}
                 />
               </label>
