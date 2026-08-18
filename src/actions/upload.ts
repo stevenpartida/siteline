@@ -32,6 +32,20 @@ export async function uploadMediaAction(
     return { error: "User has no company." };
   }
 
+  // projectId arrives from the client, so confirm it belongs to the caller's
+  // company before writing — otherwise a row could be filed against another
+  // company's project.
+  const { data: project } = await supabase
+    .from("projects")
+    .select("id")
+    .eq("id", projectId)
+    .eq("company_id", profile.company_id)
+    .maybeSingle();
+
+  if (!project) {
+    return { error: "Project not found." };
+  }
+
   // Construct file path
   const fileId = crypto.randomUUID();
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "bin";
@@ -59,7 +73,17 @@ export async function uploadMediaAction(
     ...(bucket === "documents" && { name: file.name }),
   });
   if (tableError) {
-    return { error: `Table: ${tableError.message}` };
+    // The bytes are already in the bucket, so drop them rather than leaving an
+    // unreferenced file behind. Reachable today: the documents INSERT policy is
+    // owner-or-pm, so a crew member's document upload fails right here.
+    await supabase.storage.from(bucket).remove([storageData.path]);
+
+    if (tableError.code === "42501") {
+      return {
+        error: `You don't have permission to add ${bucket} to this project.`,
+      };
+    }
+    return { error: `Could not save file: ${tableError.message}` };
   }
 
   return { error: null };

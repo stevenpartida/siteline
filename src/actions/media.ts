@@ -31,19 +31,46 @@ export async function deleteMediaAction(
     return { error: "One or more items not found for this project" };
   }
 
-  const paths = rows.map((row) => row.storage_path);
-  const { error: storageError } = await supabase.storage
-    .from(bucket)
-    .remove(paths);
-  if (storageError) return { error: `Storage: ${storageError.message}` };
-
-  const { error: deleteError } = await supabase
+  // Delete the rows FIRST and let RLS be the gate. An RLS-blocked DELETE
+  // removes zero rows *without* raising an error, so the affected-row count is
+  // the only reliable signal. Removing from storage first would strip the bytes
+  // while leaving the rows behind — a permanently broken gallery.
+  const { data: deleted, error: deleteError } = await supabase
     .from(bucket)
     .delete()
-    .in("id", ids);
+    .eq("project_id", projectId)
+    .in("id", ids)
+    .select("id, storage_path");
+
   if (deleteError) return { error: `Database: ${deleteError.message}` };
 
+  if (!deleted || deleted.length === 0) {
+    return {
+      error: `You don't have permission to delete ${
+        bucket === "photos" ? "photos" : "documents"
+      } from this project.`,
+    };
+  }
+
+  // Only clean up bytes for rows that actually went away.
+  const { error: storageError } = await supabase.storage
+    .from(bucket)
+    .remove(deleted.map((row) => row.storage_path));
+
   revalidatePath(`/projects/${projectId}`);
+
+  // The rows are gone either way, so this is not a failed delete — just
+  // unreferenced bytes left in the bucket, which is recoverable.
+  if (storageError) {
+    return { error: `Removed, but file cleanup failed: ${storageError.message}` };
+  }
+
+  if (deleted.length !== ids.length) {
+    return {
+      error: `Deleted ${deleted.length} of ${ids.length} — you may not have permission for the rest.`,
+    };
+  }
+
   return { error: null };
 }
 
