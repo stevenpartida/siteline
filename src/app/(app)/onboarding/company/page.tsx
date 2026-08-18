@@ -1,8 +1,5 @@
 import CreateCompanyForm from "@/components/onboarding/create-company-form";
 import { OnboardingProgress } from "@/components/onboarding/onboarding-progress";
-import { Button } from "@/components/ui/button";
-import { IconChevronLeft } from "@tabler/icons-react";
-import Link from "next/link";
 
 function OnboardingCompanyPage() {
   return (
