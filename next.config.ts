@@ -20,14 +20,6 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "nljpnnjzmexnculksjnw.supabase.co",
       },
-      {
-        protocol: "https",
-        hostname: "picsum.photos",
-      },
-      {
-        protocol: "https",
-        hostname: "fastly.picsum.photos", // picsum redirects to this for actual image bytes
-      },
     ],
   },
   async headers() {
@@ -45,7 +37,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value: "frame-ancestors *;",
+            value: "frame-ancestors 'self';",
           },
         ],
       },

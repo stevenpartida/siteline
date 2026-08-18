@@ -2,6 +2,10 @@ import { NextRequest } from "next/server";
 import JSZip from "jszip";
 import { createServiceClient } from "@/lib/supabase/server";
 
+// Zipping happens fully in memory, so a large share set is slow. 60s is the
+// Vercel Hobby ceiling; lower this if the plan ever rejects it.
+export const maxDuration = 60;
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ token: string }> },
