@@ -15,6 +15,7 @@ type ProjectSettingsActionsProps = {
   name: string;
   address: string;
   isStarred: boolean;
+  canEdit: boolean;
 };
 
 function ProjectSettingsActions({
@@ -22,6 +23,7 @@ function ProjectSettingsActions({
   name,
   address,
   isStarred,
+  canEdit,
 }: ProjectSettingsActionsProps) {
   const [starred, setStarred] = useState(isStarred);
   const [isPending, setIsPending] = useState(false);
@@ -42,16 +44,18 @@ function ProjectSettingsActions({
 
   return (
     <div className="flex flex-row items-center justify-center gap-6 p-4">
-      {/* Edit */}
-      <div className="flex flex-col items-center gap-1.5">
-        <button
-          onClick={() => setIsEditOpen(true)}
-          className="flex items-center justify-center size-11 rounded-xl border border-border bg-card"
-        >
-          <IconEdit stroke={1.5} size={20} />
-        </button>
-        <span className="text-xs font-medium text-foreground">Edit</span>
-      </div>
+      {/* Edit — owners and PMs only; editProjectAction rejects anyone else */}
+      {canEdit && (
+        <div className="flex flex-col items-center gap-1.5">
+          <button
+            onClick={() => setIsEditOpen(true)}
+            className="flex items-center justify-center size-11 rounded-xl border border-border bg-card"
+          >
+            <IconEdit stroke={1.5} size={20} />
+          </button>
+          <span className="text-xs font-medium text-foreground">Edit</span>
+        </div>
+      )}
 
       {/* Star */}
       <div className="flex flex-col items-center gap-1.5">
