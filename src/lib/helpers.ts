@@ -63,6 +63,23 @@ export function formatFileSize(bytes: number | null): string {
   return `${mb.toFixed(1)} MB`;
 }
 
+// Client share links are read with the service-role key, so the token is the
+// only gate — keep the window bounded. Mirrored by the column default in
+// supabase/migrations/0001_share_links_expiry.sql.
+export const SHARE_LINK_TTL_DAYS = 30;
+
+// Vercel rejects any serverless request body over 4.5 MB, so an upload past
+// this never reaches the action — guard on the client and say so, rather than
+// letting it fail as an opaque 413.
+export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
+
+export function checkUploadSize(file: File): string | null {
+  if (file.size <= MAX_UPLOAD_BYTES) return null;
+  return `That file is ${formatFileSize(file.size)}. The limit is ${formatFileSize(
+    MAX_UPLOAD_BYTES,
+  )} — try a smaller photo or lower your camera resolution.`;
+}
+
 export function groupPhotosByDate<T extends { created_at: string }>(
   photos: T[],
 ): Record<string, T[]> {
@@ -139,9 +156,16 @@ export function groupDocumentsByDate(
   return groups;
 }
 
-export function userInitials(name: string): string {
-  const [first, last] = name.split(" ");
-  return `${first[0].toUpperCase()}${last[0].toUpperCase()}`;
+// Tolerates single-word, empty, and null-ish names. editAccountSchema accepts
+// a one-word name, and users.full_name is nullable — indexing blindly here
+// threw a TypeError that took out the whole account page and photo grid.
+export function userInitials(name: string | null | undefined): string {
+  const parts = (name ?? "").trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+
+  const first = parts[0][0];
+  const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
+  return `${first}${last}`.toUpperCase();
 }
 
 export function companyFirstTwoInitals(name: string): string {
