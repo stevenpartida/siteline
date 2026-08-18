@@ -12,12 +12,18 @@ export async function GET(
   // 1. Resolve token → share link. Same auth gate as the page.
   const { data: shareLink, error: shareLinkError } = await supabase
     .from("share_links")
-    .select("id")
+    .select("id, expires_at")
     .eq("token", token)
     .single();
 
   if (shareLinkError || !shareLink) {
     return new Response("Not found", { status: 404 });
+  }
+
+  // Must be enforced here too — this route is reachable directly, without
+  // ever loading the page that shows the expiry notice.
+  if (shareLink.expires_at && new Date(shareLink.expires_at) < new Date()) {
+    return new Response("This share link has expired", { status: 410 });
   }
 
   // 2. Fetch photos THROUGH the join — only this token's grant set.

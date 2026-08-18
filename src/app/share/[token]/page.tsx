@@ -1,7 +1,8 @@
 import SharePageClient from "@/components/share/share-page-client";
-import { groupPhotosByDate } from "@/lib/helpers";
+import { SHARE_LINK_TTL_DAYS } from "@/lib/helpers";
 import { createServiceClient } from "@/lib/supabase/server";
 import { SharedPhoto } from "@/types/db";
+import { IconClockOff } from "@tabler/icons-react";
 import { notFound } from "next/navigation";
 import React from "react";
 
@@ -16,12 +17,31 @@ async function SharePage({ params }: SharePageProps) {
   // Resolve the token → share link. This is the auth gate: no row = 404.
   const { data: shareLink, error: shareLinkError } = await supabase
     .from("share_links")
-    .select("id, project_id, view_type")
+    .select("id, project_id, view_type, expires_at")
     .eq("token", token)
     .single();
 
   if (shareLinkError || !shareLink) {
     notFound();
+  }
+
+  // Expired links get a plain explanation rather than a 404 — the recipient is
+  // a client who was legitimately sent this and needs to know to ask again.
+  if (shareLink.expires_at && new Date(shareLink.expires_at) < new Date()) {
+    return (
+      <main className="flex h-dvh flex-col items-center justify-center px-6 text-center">
+        <div className="flex size-14 items-center justify-center rounded-2xl border border-border bg-card">
+          <IconClockOff stroke={1.5} className="size-7" />
+        </div>
+        <h1 className="mt-4 text-2xl font-bold tracking-tight">
+          This link has expired
+        </h1>
+        <p className="mt-1 max-w-xs text-pretty text-sm text-muted-foreground">
+          Photo links stay live for {SHARE_LINK_TTL_DAYS} days. Ask whoever sent
+          it to share a fresh one.
+        </p>
+      </main>
+    );
   }
 
   // Project header info + the owning company name (FK embed, aliased for readability).
@@ -62,11 +82,9 @@ async function SharePage({ params }: SharePageProps) {
     ? project.company[0]
     : project.company;
 
-  console.log(company);
-
   return (
     <SharePageClient
-      companyName={company.name}
+      companyName={company?.name ?? "Siteline"}
       projectName={project.name}
       projectAddress={project.address}
       viewType={shareLink.view_type}

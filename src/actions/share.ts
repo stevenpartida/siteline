@@ -1,5 +1,6 @@
 "use server";
 
+import { SHARE_LINK_TTL_DAYS } from "@/lib/helpers";
 import { createClient } from "@/lib/supabase/server";
 import { ShareViewType } from "@/types/db";
 import { randomBytes } from "crypto";
@@ -64,6 +65,9 @@ export async function generateShareLink(
 
   // Create the shareable token
   const token = randomBytes(24).toString("base64url");
+  const expiresAt = new Date(
+    Date.now() + SHARE_LINK_TTL_DAYS * 24 * 60 * 60 * 1000,
+  ).toISOString();
 
   // Insert the token and view type into the table
   const { data: link, error: linkError } = await supabase
@@ -73,6 +77,7 @@ export async function generateShareLink(
       project_id: projectId,
       created_by: user.id,
       view_type: viewType,
+      expires_at: expiresAt,
     })
     .select("id")
     .single();
@@ -92,7 +97,7 @@ export async function generateShareLink(
     .insert(joinRows);
 
   if (joinError) {
-    console.error("JOIN INSERT ERROR:", joinError); // ← add this
+    // Roll back the parent link so a photo-less share token never escapes.
     await supabase.from("share_links").delete().eq("id", link.id);
     return { ok: false, error: "Could not attach photos to link." };
   }
