@@ -48,8 +48,18 @@ export type Project = {
   address: string;
   created_at: string;
   updated_at: string;
+  // Resolved per request from project_stars for the *current user* — not the
+  // legacy company-wide projects.is_starred column, which the app ignores.
   is_starred: boolean;
   location: { lat: number; lng: number } | null;
+};
+
+// One row per (user, project) they have starred. See
+// supabase/migrations/0002_project_stars.sql.
+export type ProjectStar = {
+  user_id: string;
+  project_id: string;
+  created_at: string;
 };
 
 export type ShareViewType = "gallery" | "timeline";
@@ -60,6 +70,7 @@ export type ShareLink = {
   project_id: string;
   created_by: string;
   created_at: string;
+  expires_at: string;
   view_type: ShareViewType;
 };
 
