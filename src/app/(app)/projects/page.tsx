@@ -1,7 +1,9 @@
+import { getAuthUser } from "@/actions/auth";
 import ProjectsView from "@/components/project/projects-view";
 import { createClient } from "@/lib/supabase/server";
 import { ProjectWithThumbnail } from "@/types/project";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import React from "react";
 
 type RawProjectRow = {
@@ -21,14 +23,29 @@ async function ProjectsPage() {
   const cookieStore = await cookies();
   const supabase = await createClient(cookieStore);
 
-  const [{ data, error }, { data: userData }] = await Promise.all([
-    supabase.rpc("get_projects_with_thumbnails"),
-    supabase.from("users").select("full_name").single(),
-  ]);
+  const user = await getAuthUser();
+  if (!user) redirect("/");
+
+  const [{ data, error }, { data: userData }, { data: stars }] =
+    await Promise.all([
+      supabase.rpc("get_projects_with_thumbnails"),
+      // Must filter by id: the "users: select same company" policy returns
+      // every teammate, so an unfiltered .single() errors once a company has
+      // more than one member.
+      supabase.from("users").select("full_name").eq("id", user.id).single(),
+      // Stars are per user and RLS scopes this to auth.uid(), so it needs no
+      // filter of its own. Kept as a separate query rather than a join inside
+      // get_projects_with_thumbnails so the RPC stays untouched.
+      supabase.from("project_stars").select("project_id"),
+    ]);
 
   if (error) throw error;
 
   const firstName = userData?.full_name?.split(" ")[0] ?? "";
+
+  const starredProjectIds = new Set(
+    ((stars ?? []) as { project_id: string }[]).map((row) => row.project_id),
+  );
 
   const projects: ProjectWithThumbnail[] = (
     (data ?? []) as RawProjectRow[]
@@ -38,7 +55,9 @@ async function ProjectsPage() {
     name: row.name,
     address: row.address,
     location: row.location,
-    is_starred: row.is_starred,
+    // Deliberately ignores row.is_starred — the RPC still returns the old
+    // company-wide column, which project_stars replaced.
+    is_starred: starredProjectIds.has(row.id),
     created_at: row.created_at,
     updated_at: row.updated_at,
     thumbnail_url: row.thumbnail_storage_path

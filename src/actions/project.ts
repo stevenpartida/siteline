@@ -34,6 +34,13 @@ export async function createProjectAction(
     return { error: "Failed to fetch user data", projectId: null };
   }
 
+  // projects.company_id is nullable, so without this a mid-onboarding user
+  // would create a project with a null company — invisible to every
+  // company-scoped query, including their own.
+  if (!userData.company_id) {
+    return { error: "No company found", projectId: null };
+  }
+
   // Parse raw data
   const rawData = {
     project_name: formData.get("project_name") ?? "",
@@ -144,11 +151,28 @@ export async function deleteProjectAction(
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
+  const user = await getAuthUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { data: userData, error: userDataError } = await supabase
+    .from("users")
+    .select("company_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (userDataError || !userData) return { error: "Failed to fetch user info" };
+  if (!userData.company_id) return { error: "No company found" };
+  if (userData.role !== "owner" && userData.role !== "project_manager")
+    return { error: "Only owners and project managers can delete a project" };
+
+  // Scope the lookup to the caller's company. A bare id lookup would let any
+  // authenticated user wipe another company's project and its storage.
   const { data: project, error } = await supabase
     .from("projects")
     .select("company_id")
     .eq("id", id)
-    .single();
+    .eq("company_id", userData.company_id)
+    .maybeSingle();
 
   if (error) {
     return { error: `Database: ${error.message}` };
@@ -160,55 +184,34 @@ export async function deleteProjectAction(
 
   const folderPath = `${project.company_id}/${id}`;
 
-  // List and delete photos
-  const { data: photos, error: listPhotoError } = await supabase.storage
-    .from("photos")
-    .list(folderPath);
-
-  if (listPhotoError) {
-    return { error: `Failed to list photos: ${listPhotoError.message}` };
-  }
-
-  if (photos && photos.length > 0) {
-    const photoPaths = photos.map((file) => `${folderPath}/${file.name}`);
-
-    const { error: photoError } = await supabase.storage
-      .from("photos")
-      .remove(photoPaths);
-
-    if (photoError) {
-      return { error: `Failed to delete photos: ${photoError.message}` };
-    }
-  }
-  // List and delete documents
-  const { data: documents, error: listDocError } = await supabase.storage
-    .from("documents")
-    .list(folderPath);
-
-  if (listDocError) {
-    return { error: `Failed to list documents: ${listDocError.message}` };
-  }
-
-  if (documents && documents.length > 0) {
-    const documentPaths = documents.map((file) => `${folderPath}/${file.name}`);
-
-    const { error: documentError } = await supabase.storage
-      .from("documents")
-      .remove(documentPaths);
-
-    if (documentError) {
-      return { error: `Failed to delete documents: ${documentError.message}` };
-    }
-  }
-
-  // Delete project row
-  const { error: deleteError } = await supabase
+  // Delete the row FIRST, and confirm it actually went. An RLS-blocked DELETE
+  // affects zero rows without erroring, so wiping storage up front risks
+  // stripping every file while the project itself survives.
+  const { data: deletedProject, error: deleteError } = await supabase
     .from("projects")
     .delete()
-    .eq("id", id);
+    .eq("id", id)
+    .eq("company_id", userData.company_id)
+    .select("id");
 
   if (deleteError) {
     return { error: `Failed to delete project: ${deleteError.message}` };
+  }
+
+  if (!deletedProject || deletedProject.length === 0) {
+    return { error: "You don't have permission to delete this project" };
+  }
+
+  // Row (and its cascaded photo/document rows) are gone — now clean the bucket
+  // folders. Failures here leave unreferenced bytes, which is recoverable and
+  // must not be reported as a failed delete.
+  for (const bucket of ["photos", "documents"] as const) {
+    const { data: files } = await supabase.storage.from(bucket).list(folderPath);
+    if (files && files.length > 0) {
+      await supabase.storage
+        .from(bucket)
+        .remove(files.map((file) => `${folderPath}/${file.name}`));
+    }
   }
 
   redirect("/projects");
