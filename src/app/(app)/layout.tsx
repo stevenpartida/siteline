@@ -6,7 +6,8 @@ import { usePathname, useRouter } from "next/navigation";
 import MobileNav from "@/components/mobile/mobile-nav";
 import CreateProjectSheet from "@/components/project/create-project-sheet";
 import ProjectPickerDrawer from "@/components/project/project-picker-drawer";
-import { getCurrentPosition } from "@/lib/helpers";
+import { checkUploadSize, getCurrentPosition } from "@/lib/helpers";
+import { toast } from "sonner";
 import {
   findProjectsNearAction,
   getAllProjectsAction,
@@ -48,7 +49,35 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
     gpsRef.current = getCurrentPosition().catch(() => null);
   };
 
+  // Single funnel for the capture → upload step, so a failure can never be
+  // mistaken for success by navigating to a project with no photo.
+  const uploadCapturedPhoto = async (
+    file: File,
+    projectId: string,
+    coords: Coordinates | null,
+  ): Promise<boolean> => {
+    const toastId = toast.loading("Saving photo…");
+    const { error } = await uploadMediaAction(file, "photos", projectId, coords);
+
+    if (error) {
+      toast.error("Photo upload failed", { id: toastId, description: error });
+      return false;
+    }
+
+    toast.success("Photo saved to project", { id: toastId });
+    return true;
+  };
+
   const handleCameraCapture = async (file: File) => {
+    // Reject oversized files up front — Vercel would 413 the action anyway,
+    // and the user should hear it before picking a project.
+    const sizeError = checkUploadSize(file);
+    if (sizeError) {
+      gpsRef.current = null;
+      toast.error("Photo is too large", { description: sizeError });
+      return;
+    }
+
     const coords = await (gpsRef.current ?? Promise.resolve(null));
     gpsRef.current = null;
 
@@ -100,7 +129,10 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
     const file = pendingFileRef.current;
     const coords = pendingCoordsRef.current;
     if (!file) return;
-    await uploadMediaAction(file, "photos", projectId, coords);
+
+    const ok = await uploadCapturedPhoto(file, projectId, coords);
+    if (!ok) return; // keep the file pending so the user can retry
+
     pendingFileRef.current = null;
     pendingCoordsRef.current = null;
     router.push(`/projects/${projectId}`);
@@ -114,12 +146,14 @@ function AppLayoutInner({ children }: { children: React.ReactNode }) {
   const handleProjectCreated = async (projectId: string) => {
     const file = pendingFileRef.current;
     const coords = pendingCoordsRef.current;
-    if (file) {
-      await uploadMediaAction(file, "photos", projectId, coords);
-      pendingFileRef.current = null;
-      pendingCoordsRef.current = null;
-      router.push(`/projects/${projectId}`);
-    }
+    if (!file) return;
+
+    const ok = await uploadCapturedPhoto(file, projectId, coords);
+    if (!ok) return; // project exists; the photo can be retried from its page
+
+    pendingFileRef.current = null;
+    pendingCoordsRef.current = null;
+    router.push(`/projects/${projectId}`);
   };
 
   return (
